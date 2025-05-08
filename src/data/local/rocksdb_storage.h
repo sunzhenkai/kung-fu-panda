@@ -24,6 +24,7 @@ using DBT = rocksdb::DBWithTTL;
 class RocksDbManager : public cppcommon::Singleton<RocksDbManager> {
  public:
   static DBT *GetDb(const std::string &service);
+  ~RocksDbManager();
 
  private:
   DBT *get_db(const std::string &service);
@@ -33,6 +34,14 @@ class RocksDbManager : public cppcommon::Singleton<RocksDbManager> {
   std::unordered_map<std::string, DBT *> store_;
   std::shared_mutex store_mtx_;
 };
+
+inline RocksDbManager::~RocksDbManager() {
+  std::unique_lock lock(store_mtx_);
+  for (auto &[k, v] : store_) {
+    delete v;
+    v = nullptr;
+  }
+}
 
 inline DBT *RocksDbManager::try_get_db(const std::string &service) {
   auto it = store_.find(service);
