@@ -63,12 +63,12 @@ inline DBT *RocksDbManager::get_db(const std::string &service) {
     options.create_if_missing = true;
 
     auto pt = std::filesystem::path(fLS::FLAGS_local_db_path) / std::filesystem::path(service);
-    rocksdb::Status status = DBT::Open(options, pt.string(), &db, FLAGS_data_ttl);
     if (!std::filesystem::exists(pt)) {
       std::filesystem::create_directories(pt);
     }
+    rocksdb::Status status = DBT::Open(options, pt.string(), &db, FLAGS_data_ttl);
     if (!status.ok()) {
-      RERROR("[{}] create db failed. [service={}, pat={}, message={}]", __func__, service, pt.string(),
+      RERROR("[{}] create db failed. [service={}, path={}, message={}]", __func__, service, pt.string(),
              status.ToString());
       return nullptr;
     } else {
