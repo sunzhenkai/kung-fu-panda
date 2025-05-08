@@ -10,7 +10,6 @@
 TEST(Data, Read) {
   auto db = kfpanda::RocksDbManager::GetDb("echo_v2");
   rocksdb::Iterator* it = db->NewIterator(rocksdb::ReadOptions());
-  // 从最后一个键开始遍历
   for (it->SeekToLast(); it->Valid(); it->Prev()) {
     auto v = it->value();
     kfpanda::RecordRequest req;
