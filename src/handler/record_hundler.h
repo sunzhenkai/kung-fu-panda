@@ -29,6 +29,10 @@ class RecordHandler : public BaseHandler {
 inline absl::Status RecordHandler::Process() {
   auto r = c.request;
   auto &svc = r->service();
+  if (svc.empty()) {
+    return kReqErr;
+  }
+
   auto db = RocksDbManager::GetDb(svc);
   if (db == nullptr) {
     return kDbErr;

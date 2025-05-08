@@ -9,4 +9,5 @@
 
 namespace kfpanda {
 extern const absl::Status kDbErr;
-}
+extern const absl::Status kReqErr;
+}  // namespace kfpanda
