@@ -59,7 +59,10 @@ inline absl::Status ReplayHandler::Process() {
     delete it;
   }
   // 3. replay request
-
+  ReplayOutput output;
+  ReplayOperator::Replay(input, output);
+  // 4. convert to response
+  // TODO(wii) pack
   return absl::OkStatus();
 }
 
