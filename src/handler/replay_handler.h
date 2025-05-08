@@ -1,13 +1,16 @@
 #pragma once
+#include <absl/strings/numbers.h>
+#include <absl/strings/string_view.h>
+
 #include <string>
 #include <utility>
 
 #include "absl/status/status.h"
 #include "base.h"
 #include "common/constants.h"
-#include "cppcommon/utils/time.h"
 #include "data/local/rocksdb_storage.h"
 #include "protos/service/kfpanda/kfpanda.pb.h"
+#include "replay/base_replay.h"
 
 namespace kfpanda {
 struct ReplayContext {
@@ -38,7 +41,25 @@ inline absl::Status ReplayHandler::Process() {
     return kDbErr;
   }
   // 2. traverse request
+  ReplayInput input;
+  {
+    rocksdb::Iterator *it = db->NewIterator(rocksdb::ReadOptions());
+    // traverse by timestamp in desc order
+    for (it->SeekToLast(); it->Valid(); it->Prev()) {
+      auto k = it->key();
+      auto v = it->value();
+      ReplayRecord record;
+      if (!absl::SimpleAtoi(absl::string_view(k.data(), k.size()), &record.timestamp_ms)) {
+        continue;
+      }
+      record.value = v.ToString();
+      input.records.emplace_back(std::move(record));
+      if (input.records.size() >= r->option().count()) break;
+    }
+    delete it;
+  }
   // 3. replay request
+
   return absl::OkStatus();
 }
 
