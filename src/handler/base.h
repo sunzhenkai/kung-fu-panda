@@ -9,8 +9,9 @@
 
 namespace kfpanda {
 class BaseHandler {
+ public:
   virtual absl::Status Prepare() { return absl::OkStatus(); }
-  virtual absl::Status Process();
+  virtual absl::Status Process() = 0;
   virtual absl::Status Post() { return absl::OkStatus(); }
 };
 }  // namespace kfpanda

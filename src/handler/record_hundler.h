@@ -1,3 +1,4 @@
+#pragma once
 #include "absl/status/status.h"
 #include "base.h"
 #include "protos/service/kfpanda/kfpanda.pb.h"
@@ -5,7 +6,7 @@
 namespace kfpanda {
 struct RecordContext {
   ::google::protobuf::RpcController *cntl;
-  kfpanda::RecordRequest *request;
+  const kfpanda::RecordRequest *request;
   kfpanda::RecordResponse *response;
 };
 

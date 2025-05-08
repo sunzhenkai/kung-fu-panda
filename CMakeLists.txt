@@ -21,8 +21,10 @@ find_package(protobuf CONFIG REQUIRED)
 find_package(unofficial-brpc CONFIG REQUIRED)
 find_package(cppcommon CONFIG REQUIRED)
 find_package(kung-fu-panda-protocols CONFIG REQUIRED)
-set(THIRD_LIBRARIES kung-fu-panda-protocols::kung-fu-panda-protocols
-                    unofficial::brpc::brpc-static)
+set(THIRD_LIBRARIES
+    fmt::fmt spdlog::spdlog rapidjson
+    kung-fu-panda-protocols::kung-fu-panda-protocols cppcommon::cppcommon
+    unofficial::brpc::brpc-static)
 
 file(GLOB_RECURSE LIB_HEADERS src/*.h)
 file(GLOB_RECURSE LIB_SRCS src/*.cc)
