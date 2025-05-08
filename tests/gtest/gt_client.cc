@@ -15,6 +15,7 @@ TEST(Client, SampleWrite) {
 
   brpc::Controller cntl;
   kfpanda::RecordRequest request;
+  request.set_service("echo");
   kfpanda::RecordResponse response;
 
   stub->Record(&cntl, &request, &response, nullptr);

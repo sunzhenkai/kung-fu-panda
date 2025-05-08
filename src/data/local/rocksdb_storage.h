@@ -35,14 +35,17 @@ class RocksDbManager : public cppcommon::Singleton<RocksDbManager> {
 };
 
 inline DBT *RocksDbManager::try_get_db(const std::string &service) {
-  std::shared_lock lock(store_mtx_);
   auto it = store_.find(service);
-  if (it == store_.end()) return it->second;
+  if (it != store_.end()) return it->second;
   return nullptr;
 }
 
 inline DBT *RocksDbManager::get_db(const std::string &service) {
-  DBT *db = try_get_db(service);
+  DBT *db = nullptr;
+  {
+    std::shared_lock lock(store_mtx_);
+    try_get_db(service);
+  }
   if (db == nullptr) {
     std::unique_lock lock(store_mtx_);
     db = try_get_db(service);
