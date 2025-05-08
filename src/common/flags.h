@@ -10,4 +10,6 @@
 
 namespace kfpanda {
 DECLARE_int32(port);
+DECLARE_string(local_db_path);
+DECLARE_int32(data_ttl);
 }  // namespace kfpanda

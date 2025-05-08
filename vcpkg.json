@@ -9,6 +9,7 @@
     "gtest",
     "cpp-common",
     "rapidjson",
+    "rocksdb",
     "kung-fu-panda-protocols"
   ],
   "overrides": []

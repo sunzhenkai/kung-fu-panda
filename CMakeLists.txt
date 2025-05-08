@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 project(kung-fu-panda)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 option(BUILD_TESTING "build unittests" OFF)
@@ -19,11 +19,17 @@ find_package(spdlog REQUIRED)
 find_package(RapidJSON REQUIRED)
 find_package(protobuf CONFIG REQUIRED)
 find_package(unofficial-brpc CONFIG REQUIRED)
+find_package(RocksDB CONFIG REQUIRED)
 find_package(cppcommon CONFIG REQUIRED)
 find_package(kung-fu-panda-protocols CONFIG REQUIRED)
+
 set(THIRD_LIBRARIES
-    fmt::fmt spdlog::spdlog rapidjson
-    kung-fu-panda-protocols::kung-fu-panda-protocols cppcommon::cppcommon
+    RocksDB::rocksdb
+    fmt::fmt
+    spdlog::spdlog
+    rapidjson
+    kung-fu-panda-protocols::kung-fu-panda-protocols
+    cppcommon::cppcommon
     unofficial::brpc::brpc-static)
 
 file(GLOB_RECURSE LIB_HEADERS src/*.h)
