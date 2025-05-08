@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 #include <utility>
 
 #include "absl/status/status.h"
@@ -33,6 +34,12 @@ inline absl::Status RecordHandler::Process() {
     return kDbErr;
   }
   auto ts_ms = r->timestamp_ms() <= 0 ? cppcommon::CurrentTs() : r->timestamp_ms();
+  std::string pbout;
+  r->SerializeToString(&pbout);
+  auto status = db->Put(rocksdb::WriteOptions(), std::to_string(ts_ms), pbout);
+  if (!status.ok()) {
+    return absl::ErrnoToStatus(status.code(), status.ToString());
+  }
   return absl::OkStatus();
 }
 
