@@ -4,4 +4,4 @@ vcpkg-manifest-install.log
 vcpkg_installed
 .cache
 log
-core.*
+core*
