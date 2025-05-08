@@ -8,7 +8,6 @@
 #include <cppcommon/extends/spdlog/log.h>
 
 #include <filesystem>
-#include <memory>
 #include <mutex>
 #include <shared_mutex>
 #include <string>
