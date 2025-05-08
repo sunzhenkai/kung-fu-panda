@@ -1,0 +1,15 @@
+{
+  "name": "kung-fu-panda",
+  "version": "0.0.1",
+  "dependencies": [
+    "brpc",
+    "fmt",
+    "gflags",
+    "spdlog",
+    "gtest",
+    "cpp-common",
+    "rapidjson",
+    "kung-fu-panda-protocols"
+  ],
+  "overrides": []
+}
