@@ -43,6 +43,7 @@ inline absl::Status ReplayHandler::Process() {
   // 2. traverse request
   ReplayInput input;
   {
+    size_t replay_count = r->option().count();
     rocksdb::Iterator *it = db->NewIterator(rocksdb::ReadOptions());
     // traverse by timestamp in desc order
     for (it->SeekToLast(); it->Valid(); it->Prev()) {
@@ -54,7 +55,7 @@ inline absl::Status ReplayHandler::Process() {
       }
       record.value = v.ToString();
       input.records.emplace_back(std::move(record));
-      if (input.records.size() >= r->option().count()) break;
+      if (input.records.size() >= replay_count) break;
     }
     delete it;
   }
