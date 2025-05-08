@@ -1,4 +1,16 @@
+# Description
+
 Kung Fu Panda is a general request playback tool.
+
+# Services
+
+## HttpService
+
+### Echo
+
+```shell
+curl 127.0.0.1:9820/api/echo -d "hello world"
+```
 
 # Submodules
 

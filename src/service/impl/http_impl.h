@@ -23,5 +23,6 @@ inline void HttpKfPandaServiceImpl ::Replay(::google::protobuf::RpcController* c
                                             const ::kfpanda::HttpRequest* request, ::kfpanda::HttpResponse* response,
                                             ::google::protobuf::Closure* done) {
   brpc::ClosureGuard dg(done);
+  // TODO: fill logic code
 }
 }  // namespace kfpanda
