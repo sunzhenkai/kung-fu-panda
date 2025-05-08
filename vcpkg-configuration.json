@@ -1,0 +1,17 @@
+{
+  "default-registry": {
+    "kind": "git",
+    "repository": "https://github.com/microsoft/vcpkg.git",
+    "baseline": "782ccc18d8b819cdef6794a6c03eb3d9f7cd04aa"
+  },
+  "registries": [
+    {
+      "kind": "git",
+      "repository": "https://github.com/sunzhenkai/vcpkg-base.git",
+      "baseline": "c2fc72304c1f7ec25aad073b860b83d252e6683d",
+      "reference": "main",
+      "packages": ["apollo-client", "aerospike-client", "babylon", "cpp-common"]
+    }
+  ],
+  "overlay-ports": ["assets/overlay-ports"]
+}
