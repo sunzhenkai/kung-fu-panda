@@ -7,7 +7,7 @@
 #include "gtest/gtest.h"
 
 TEST(Client, SampleWrite) {
-  auto server = fmt::format("127.0.0.1:", kfpanda::FLAGS_port);
+  auto server = fmt::format("127.0.0.1:{}", kfpanda::FLAGS_port);
   auto client = kfpanda::KfpandaClient(server);
   auto s = client.Init();
   ASSERT_TRUE(s.ok());

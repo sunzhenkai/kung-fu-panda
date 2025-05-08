@@ -33,7 +33,7 @@ inline absl::Status KfpandaClient::Init() {
   options.connection_type = "single";
   options.timeout_ms = 1000 /*milliseconds*/;
   options.max_retry = 0;
-  if (channel_.Init(server_.c_str(), "rr", &options) != 0) {
+  if (channel_.Init(server_.c_str(), "", &options) != 0) {
     return absl::ErrnoToStatus(400, "absl::string_view message");
   }
   stub_ = std::make_shared<kfpanda::KfPandaService_Stub>(&channel_);
