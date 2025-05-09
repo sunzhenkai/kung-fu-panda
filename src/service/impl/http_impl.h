@@ -60,7 +60,7 @@ inline void HttpKfPandaServiceImpl::Replay(::google::protobuf::RpcController* co
   absl::Status status = absl::OkStatus();
   if (cntl->request_attachment().empty()) {
     req.set_service("KungFuPandaServer");
-    req.mutable_target()->set_ip("127.0.0.1");
+    req.mutable_target()->set_host("127.0.0.1");
     req.mutable_target()->set_port(FLAGS_port);
     req.mutable_option()->set_count(1);
   } else {
