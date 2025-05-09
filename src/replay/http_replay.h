@@ -11,6 +11,7 @@
 #include <fmt/format.h>
 #include <protos/dumper/http.pb.h>
 #include <protos/service/kfpanda/kfpanda.pb.h>
+#include <spdlog/spdlog.h>
 
 #include "absl/status/status.h"
 #include "brpc/channel.h"
@@ -21,7 +22,7 @@ class HttpReplayClient {
  public:
   explicit HttpReplayClient(const kfpanda::ReplayRequest::Target &target) : target_(target) { Init(); }
   inline bool IsOk() { return !has_error_; }
-  absl::Status Replay(const kfpanda::RecordRequest *req);
+  absl::Status Replay(const kfpanda::RecordRequest *req, kfpanda::ReplayResponse::ServiceResponse *rsp);
 
  private:
   void Init();
@@ -35,8 +36,7 @@ class HttpReplayClient {
 inline void HttpReplayClient::Init() {
   brpc::ChannelOptions options;
   options.protocol = "http";
-  options.connection_type = "single";
-  options.timeout_ms = 1000 /*milliseconds*/;
+  options.timeout_ms = 1000;
   options.max_retry = 0;
   auto server = fmt::format("{}:{}", target_.ip(), target_.port());
   if (channel_.Init(server.c_str(), "", &options) != 0) {
@@ -45,7 +45,8 @@ inline void HttpReplayClient::Init() {
   }
 }
 
-inline absl::Status HttpReplayClient::Replay(const kfpanda::RecordRequest *req) {
+inline absl::Status HttpReplayClient::Replay(const kfpanda::RecordRequest *req,
+                                             kfpanda::ReplayResponse::ServiceResponse *rsp) {
   if (has_error_) {
     auto msg = fmt::format("http replay client init failed. [ip={}, port={}]", target_.ip(), target_.port());
     return absl::ErrnoToStatus(501, msg);
@@ -62,6 +63,7 @@ inline absl::Status HttpReplayClient::Replay(const kfpanda::RecordRequest *req) 
   if (cntl.Failed()) {
     return absl::ErrnoToStatus(cntl.ErrorCode(), cntl.ErrorText());
   }
+  rsp->set_message(cntl.response_attachment().to_string());
   return absl::OkStatus();
 }
 }  // namespace kfpanda

@@ -41,7 +41,7 @@ inline absl::Status ReplayHandler::Process() {
     return kDbErr;
   }
   // 2. traverse request
-  ReplayInput input;
+  ReplayInput input{.request = r};
   {
     size_t replay_count = r->option().count();
     rocksdb::Iterator *it = db->NewIterator(rocksdb::ReadOptions());
@@ -60,10 +60,8 @@ inline absl::Status ReplayHandler::Process() {
     delete it;
   }
   // 3. replay request
-  ReplayOutput output;
+  ReplayOutput output{.response = c.response};
   ReplayOperator::Replay(input, output);
-  // 4. convert to response
-  // TODO(wii) pack
   return absl::OkStatus();
 }
 
