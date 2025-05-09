@@ -21,6 +21,8 @@ class HttpKfPandaServiceImpl : public kfpanda::HttpKfPandaService {
             ::kfpanda::HttpResponse* response, ::google::protobuf::Closure* done) override;
   void Replay(::google::protobuf::RpcController* controller, const ::kfpanda::HttpRequest* request,
               ::kfpanda::HttpResponse* response, ::google::protobuf::Closure* done) override;
+  void Api(::google::protobuf::RpcController* controller, const ::kfpanda::HttpRequest* request,
+           ::kfpanda::HttpResponse* response, ::google::protobuf::Closure* done) override;
 };
 
 inline void HttpKfPandaServiceImpl::Echo(::google::protobuf::RpcController* controller,
@@ -45,6 +47,7 @@ inline void HttpKfPandaServiceImpl::Echo(::google::protobuf::RpcController* cont
     RERROR("[{}] record faield", __func__);
   }
 }
+
 inline void HttpKfPandaServiceImpl::Replay(::google::protobuf::RpcController* controller,
                                            const ::kfpanda::HttpRequest* request, ::kfpanda::HttpResponse* response,
                                            ::google::protobuf::Closure* done) {
@@ -73,5 +76,13 @@ inline void HttpKfPandaServiceImpl::Replay(::google::protobuf::RpcController* co
     auto r = fmt::format("code={}, message={}", static_cast<int>(status.code()), status.message());
     cntl->response_attachment().append(r);
   }
+}
+
+inline void HttpKfPandaServiceImpl::Api(::google::protobuf::RpcController* controller,
+                                        const ::kfpanda::HttpRequest* request, ::kfpanda::HttpResponse* response,
+                                        ::google::protobuf::Closure* done) {
+  brpc::ClosureGuard dg(done);
+  brpc::Controller* cntl = static_cast<brpc::Controller*>(controller);
+  cntl->response_attachment().append("not impl");
 }
 }  // namespace kfpanda
