@@ -1,8 +1,14 @@
 #pragma once
 #include <cppcommon/extends/spdlog/log.h>
+#include <fmt/format.h>
+#include <google/protobuf/util/json_util.h>
 #include <protos/dumper/http.pb.h>
+#include <spdlog/spdlog.h>
+
+#include <string>
 
 #include "brpc/closure_guard.h"
+#include "common/flags.h"
 #include "handler/record_handler.h"
 #include "handler/replay_handler.h"
 #include "protos/service/kfpanda/kfpanda.pb.h"
@@ -15,12 +21,13 @@ class HttpKfPandaServiceImpl : public kfpanda::HttpKfPandaService {
               ::kfpanda::HttpResponse* response, ::google::protobuf::Closure* done) override;
 };
 
-inline void HttpKfPandaServiceImpl ::Echo(::google::protobuf::RpcController* controller,
-                                          const ::kfpanda::HttpRequest* request, ::kfpanda::HttpResponse* response,
-                                          ::google::protobuf::Closure* done) {
+inline void HttpKfPandaServiceImpl::Echo(::google::protobuf::RpcController* controller,
+                                         const ::kfpanda::HttpRequest* request, ::kfpanda::HttpResponse* response,
+                                         ::google::protobuf::Closure* done) {
   brpc::ClosureGuard dg(done);
   brpc::Controller* cntl = static_cast<brpc::Controller*>(controller);
   cntl->response_attachment().append(cntl->request_attachment());
+  spdlog::info("[{}] echo. [message={}]", __func__, cntl->request_attachment().to_string());
 
   // record request
   kfpanda::RecordRequest n_req;
@@ -36,10 +43,25 @@ inline void HttpKfPandaServiceImpl ::Echo(::google::protobuf::RpcController* con
     RERROR("[{}] record faield", __func__);
   }
 }
-inline void HttpKfPandaServiceImpl ::Replay(::google::protobuf::RpcController* controller,
-                                            const ::kfpanda::HttpRequest* request, ::kfpanda::HttpResponse* response,
-                                            ::google::protobuf::Closure* done) {
+inline void HttpKfPandaServiceImpl::Replay(::google::protobuf::RpcController* controller,
+                                           const ::kfpanda::HttpRequest* request, ::kfpanda::HttpResponse* response,
+                                           ::google::protobuf::Closure* done) {
   brpc::ClosureGuard dg(done);
-  // TODO: fill logic code
+  kfpanda::ReplayResponse rsp;
+  kfpanda::ReplayRequest req;
+  req.set_service("KungFuPandaServer");
+  req.mutable_target()->set_ip("127.0.0.1");
+  req.mutable_target()->set_port(FLAGS_port);
+  req.mutable_option()->set_count(1);
+  auto status = ReplayHandler::Handle(ReplayContext{.cntl = controller, .request = &req, .response = &rsp});
+  brpc::Controller* cntl = static_cast<brpc::Controller*>(controller);
+  if (status.ok()) {
+    std::string js;
+    auto j = google::protobuf::util::MessageToJsonString(rsp, &js);
+    cntl->response_attachment().append(js);
+  } else {
+    auto r = fmt::format("code={}, message={}", static_cast<int>(status.code()), status.message());
+    cntl->response_attachment().append(r);
+  }
 }
 }  // namespace kfpanda
