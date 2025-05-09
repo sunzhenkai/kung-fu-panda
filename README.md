@@ -16,7 +16,7 @@ curl 127.0.0.1:9820/api/echo -d "hello world"
 
 ## `/api/replay`
 
-````json
+```json
 {
   "requestId": "7a49c678-205e-4c83-884b-796d865c2964",
   "service": "KungFuPandaServer",
@@ -36,16 +36,21 @@ curl 127.0.0.1:9820/api/echo -d "hello world"
 ```shell
 curl 127.0.0.1:9820/debug/stat
 ```
+
 Response Example
+
 ```shell
 {"KungFuPandaServer":"4"}
 ```
 
 ## `/debug/sample`
+
 ```shell
 curl 127.0.0.1:9820/debug/sample -d '{"service":"KungFuPandaServer"}'
 ```
+
 Response Example
+
 ```shell
 {"1746787992959":{"uri":{"path":"/api/echo"},"service":"KungFuPandaServer","type":"RECORD_TYPE_HTTP","data":"aGVsbG8gd29ybGQ="}}
 ```
@@ -59,4 +64,7 @@ Response Example
 
 - [rocksdb](https://github.com/facebook/rocksdb)
 - [brpc](https://github.com/apache/brpc)
-````
+
+```
+
+```
