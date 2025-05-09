@@ -1,4 +1,6 @@
 #pragma once
+#include <absl/status/status.h>
+#include <absl/strings/string_view.h>
 #include <cppcommon/extends/spdlog/log.h>
 #include <fmt/format.h>
 #include <google/protobuf/util/json_util.h>
@@ -27,7 +29,7 @@ inline void HttpKfPandaServiceImpl::Echo(::google::protobuf::RpcController* cont
   brpc::ClosureGuard dg(done);
   brpc::Controller* cntl = static_cast<brpc::Controller*>(controller);
   cntl->response_attachment().append(cntl->request_attachment());
-  spdlog::info("[{}] echo. [message={}]", __func__, cntl->request_attachment().to_string());
+  // spdlog::info("[{}] echo. [message={}]", __func__, cntl->request_attachment().to_string());
 
   // record request
   kfpanda::RecordRequest n_req;
@@ -47,14 +49,22 @@ inline void HttpKfPandaServiceImpl::Replay(::google::protobuf::RpcController* co
                                            const ::kfpanda::HttpRequest* request, ::kfpanda::HttpResponse* response,
                                            ::google::protobuf::Closure* done) {
   brpc::ClosureGuard dg(done);
+  brpc::Controller* cntl = static_cast<brpc::Controller*>(controller);
   kfpanda::ReplayResponse rsp;
   kfpanda::ReplayRequest req;
-  req.set_service("KungFuPandaServer");
-  req.mutable_target()->set_ip("127.0.0.1");
-  req.mutable_target()->set_port(FLAGS_port);
-  req.mutable_option()->set_count(1);
-  auto status = ReplayHandler::Handle(ReplayContext{.cntl = controller, .request = &req, .response = &rsp});
-  brpc::Controller* cntl = static_cast<brpc::Controller*>(controller);
+
+  absl::Status status = absl::OkStatus();
+  if (cntl->request_attachment().empty()) {
+    req.set_service("KungFuPandaServer");
+    req.mutable_target()->set_ip("127.0.0.1");
+    req.mutable_target()->set_port(FLAGS_port);
+    req.mutable_option()->set_count(1);
+  } else {
+    status = google::protobuf::util::JsonStringToMessage(cntl->request_attachment().to_string(), &req);
+  }
+  if (status.ok()) {
+    status = ReplayHandler::Handle(ReplayContext{.cntl = controller, .request = &req, .response = &rsp});
+  }
   if (status.ok()) {
     std::string js;
     auto j = google::protobuf::util::MessageToJsonString(rsp, &js);
