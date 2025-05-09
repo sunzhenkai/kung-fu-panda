@@ -9,7 +9,6 @@
 #include <brpc/controller.h>
 #include <brpc/http_method.h>
 #include <fmt/format.h>
-#include <protos/dumper/http.pb.h>
 #include <protos/service/kfpanda/kfpanda.pb.h>
 #include <spdlog/spdlog.h>
 
@@ -52,13 +51,11 @@ inline absl::Status HttpReplayClient::Replay(const kfpanda::RecordRequest *req,
     return absl::ErrnoToStatus(501, msg);
   }
   auto rid = req->request_id();
-  dumper::HttpRequest hr;
-  hr.ParseFromString(req->data());
   // send request
   brpc::Controller cntl;
-  cntl.http_request().uri() = hr.uri().path();
+  cntl.http_request().uri() = req->uri().path();
   cntl.http_request().set_method(brpc::HTTP_METHOD_POST);
-  cntl.request_attachment().append(hr.body());
+  cntl.request_attachment().append(req->data());
   channel_.CallMethod(nullptr, &cntl, nullptr, nullptr, nullptr);
   if (cntl.Failed()) {
     return absl::ErrnoToStatus(cntl.ErrorCode(), cntl.ErrorText());

@@ -4,7 +4,6 @@
 #include <cppcommon/extends/spdlog/log.h>
 #include <fmt/format.h>
 #include <google/protobuf/util/json_util.h>
-#include <protos/dumper/http.pb.h>
 #include <spdlog/spdlog.h>
 
 #include <string>
@@ -16,7 +15,6 @@
 #include "data/local/rocksdb_storage.h"
 #include "handler/record_handler.h"
 #include "handler/replay_handler.h"
-#include "protos/dumper/http.pb.h"
 #include "protos/service/kfpanda/kfpanda.pb.h"
 #include "rapidjson/document.h"
 
@@ -43,10 +41,8 @@ inline void HttpKfPandaServiceImpl::Echo(::google::protobuf::RpcController* cont
   kfpanda::RecordResponse n_resp;
   n_req.set_service("KungFuPandaServer");
   n_req.set_type(::kfpanda::RECORD_TYPE_HTTP);
-  dumper::HttpRequest hr;
-  hr.mutable_uri()->set_path("/api/echo");
-  hr.set_body(cntl->request_attachment().to_string());
-  hr.SerializeToString(n_req.mutable_data());
+  n_req.mutable_uri()->set_path("/api/echo");
+  n_req.set_data(cntl->request_attachment().to_string());
   auto status = RecordHandler::Handle(RecordContext{.cntl = controller, .request = &n_req, .response = &n_resp});
   if (!status.ok()) {
     RERROR("[{}] record faield", __func__);
@@ -112,15 +108,10 @@ inline void HttpKfPandaServiceImpl::Api(::google::protobuf::RpcController* contr
           kfpanda::RecordRequest rr;
           if (rr.ParseFromString(v)) {
             if (rr.type() == kfpanda::RECORD_TYPE_HTTP) {
-              dumper::HttpRequest hr;
-              if (hr.ParseFromString(rr.data())) {
-                std::string njs;
-                auto s = google::protobuf::util::MessageToJsonString(hr, &njs);
-                if (s.ok()) {
-                  jb.AddJsonStr(k, njs);
-                }
-              } else {
-                spdlog::info("[{}] parse http request failed", __func__);
+              std::string njs;
+              auto s = google::protobuf::util::MessageToJsonString(rr, &njs);
+              if (s.ok()) {
+                jb.AddJsonStr(k, njs);
               }
             } else {
               spdlog::info("[{}] unsupported protocol type", __func__);
