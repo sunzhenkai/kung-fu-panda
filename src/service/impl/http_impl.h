@@ -11,9 +11,14 @@
 
 #include "brpc/closure_guard.h"
 #include "common/flags.h"
+#include "cppcommon/extends/rapidjson/builder.h"
+#include "cppcommon/utils/to_str.h"
+#include "data/local/rocksdb_storage.h"
 #include "handler/record_handler.h"
 #include "handler/replay_handler.h"
+#include "protos/dumper/http.pb.h"
 #include "protos/service/kfpanda/kfpanda.pb.h"
+#include "rapidjson/document.h"
 
 namespace kfpanda {
 class HttpKfPandaServiceImpl : public kfpanda::HttpKfPandaService {
@@ -83,6 +88,46 @@ inline void HttpKfPandaServiceImpl::Api(::google::protobuf::RpcController* contr
                                         ::google::protobuf::Closure* done) {
   brpc::ClosureGuard dg(done);
   brpc::Controller* cntl = static_cast<brpc::Controller*>(controller);
-  cntl->response_attachment().append("not impl");
+  auto pt = cntl->http_request().uri().path();
+  if (pt == "/debug/stat") {
+    auto dbstat = RocksDbManager::GetDbState();
+    cntl->response_attachment().append(cppcommon::ToString(dbstat));
+  } else if (pt == "/debug/sample") {
+    auto r = cntl->request_attachment().to_string();
+    rapidjson::Document doc;
+    doc.Parse(r.c_str(), r.size());
+    if (doc.HasParseError()) {
+      cntl->response_attachment().append("parse request body failed (json)");
+    } else {
+      auto it_service = doc.FindMember("service");
+      auto it_count = doc.FindMember("count");
+      if (it_service == doc.MemberEnd()) {
+        cntl->response_attachment().append("service is not specified");
+      } else {
+        auto count = it_count == doc.MemberEnd() ? 1 : it_count->value.GetInt();
+        auto items = RocksDbManager::TryGetIterms("", count);
+
+        cppcommon::JsonBuilder jb;
+        for (auto& [k, v] : items) {
+          kfpanda::RecordRequest rr;
+          if (rr.ParseFromString(v)) {
+            if (rr.type() == kfpanda::RECORD_TYPE_HTTP) {
+              dumper::HttpRequest hr;
+              if (hr.ParseFromString(rr.data())) {
+                std::string njs;
+                auto s = google::protobuf::util::MessageToJsonString(hr, &njs);
+                if (s.ok()) {
+                  jb.AddJsonStr(k, njs);
+                }
+              }
+            }
+          }
+        }
+        cntl->response_attachment().append(jb.Build());
+      }
+    }
+  } else {
+    cntl->response_attachment().append("not impl");
+  }
 }
 }  // namespace kfpanda
