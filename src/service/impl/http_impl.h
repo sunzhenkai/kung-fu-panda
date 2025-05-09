@@ -105,7 +105,7 @@ inline void HttpKfPandaServiceImpl::Api(::google::protobuf::RpcController* contr
         cntl->response_attachment().append("service is not specified");
       } else {
         auto count = it_count == doc.MemberEnd() ? 1 : it_count->value.GetInt();
-        auto items = RocksDbManager::TryGetIterms("", count);
+        auto items = RocksDbManager::TryGetIterms(it_service->value.GetString(), count);
 
         cppcommon::JsonBuilder jb;
         for (auto& [k, v] : items) {
@@ -119,8 +119,14 @@ inline void HttpKfPandaServiceImpl::Api(::google::protobuf::RpcController* contr
                 if (s.ok()) {
                   jb.AddJsonStr(k, njs);
                 }
+              } else {
+                spdlog::info("[{}] parse http request failed", __func__);
               }
+            } else {
+              spdlog::info("[{}] unsupported protocol type", __func__);
             }
+          } else {
+            spdlog::info("[{}] parse record request failed", __func__);
           }
         }
         cntl->response_attachment().append(jb.Build());
