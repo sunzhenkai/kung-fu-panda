@@ -30,7 +30,7 @@ using DBStatT = std::unordered_map<std::string, std::string>;
 class RocksDbManager : public cppcommon::Singleton<RocksDbManager> {
  public:
   static DBT *GetDb(const std::string &service);
-  static DBItemsT TryGetIterms(const std::string &service, int count = 1);
+  static DBItemsT TryGetIterms(const std::string &service, size_t count = 1);
   static DBStatT GetDbState();
 
   ~RocksDbManager();
@@ -92,7 +92,8 @@ inline DBT *RocksDbManager::get_db(const std::string &service) {
 
 inline DBT *RocksDbManager::GetDb(const std::string &service) { return Instance().get_db(service); }
 
-inline DBItemsT RocksDbManager::TryGetIterms(const std::string &service, int count) {
+inline DBItemsT RocksDbManager::TryGetIterms(const std::string &service, size_t count) {
+  count = std::min(count, 1000ul);
   DBItemsT ret;
   auto db = Instance().get_db(service);
   if (db != nullptr) {
@@ -100,6 +101,7 @@ inline DBItemsT RocksDbManager::TryGetIterms(const std::string &service, int cou
     // traverse by timestamp in desc order
     for (it->SeekToLast(); it->Valid(); it->Prev()) {
       ret.emplace_back(it->key().ToString(), it->value().ToString());
+      if (ret.size() >= count) break;
     }
     delete it;
   }
