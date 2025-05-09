@@ -16,6 +16,8 @@ curl 127.0.0.1:9820/api/echo -d "hello world"
 
 ## `/api/replay`
 
+Request Body
+
 ```json
 {
   "requestId": "7a49c678-205e-4c83-884b-796d865c2964",
@@ -28,6 +30,19 @@ curl 127.0.0.1:9820/api/echo -d "hello world"
     "host": "127.0.0.1",
     "port": 9820
   }
+}
+```
+
+Response Example
+
+```shell
+{
+    "successCount": 1,
+    "responses": [
+        {
+            "message": "hello world"
+        }
+    ]
 }
 ```
 
