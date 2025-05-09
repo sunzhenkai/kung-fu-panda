@@ -12,6 +12,25 @@ Kung Fu Panda is a general request playback tool.
 curl 127.0.0.1:9820/api/echo -d "hello world"
 ```
 
+# API
+
+## `/api/replay`
+
+````json
+{
+  "requestId": "7a49c678-205e-4c83-884b-796d865c2964",
+  "service": "KungFuPandaServer",
+  "option": {
+    "count": 1,
+    "timeoutMs": 1000
+  },
+  "target": {
+    "ip": "127.0.0.1",
+    "port": 9820
+  }
+}
+```
+
 # Submodules
 
 - [Protocols](https://github.com/sunzhenkai/kung-fu-panda-protocols)
@@ -21,3 +40,4 @@ curl 127.0.0.1:9820/api/echo -d "hello world"
 
 - [rocksdb](https://github.com/facebook/rocksdb)
 - [brpc](https://github.com/apache/brpc)
+````
