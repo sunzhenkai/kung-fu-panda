@@ -1,0 +1,127 @@
+#include "restful_cntl.h"
+
+#include <absl/status/status.h>
+#include <fmt/format.h>
+
+#include <string>
+#include <unordered_map>
+
+#include "cppcommon/extends/rapidjson/builder.h"
+#include "google/protobuf/util/json_util.h"
+#include "handler/record_handler.h"
+#include "handler/replay_handler.h"
+#include "rapidjson/document.h"
+
+namespace kfpanda {
+const std::unordered_map<std::string, ViewFunc> kRestfulApiViews = {
+    {"/api/echo", api_echo},
+    {"/api/replay", api_replay},
+    {"/api/debug/stat", api_debug_stat},
+    {"/api/debug/sample", api_debug_sample},
+};
+
+std::string Response::ToJson() { return ToJson(status_); }
+
+std::string Response::ToJson(const absl::Status &status) {
+  auto code = static_cast<int>(status.code());
+  jb_.Add("success", code == 0);
+  jb_.Add("code", code);
+  jb_.Add("message", status.message());
+  return jb_.Build();
+}
+
+std::string Response::From(const absl::Status &status) {
+  Response res(status);
+  return res.ToJson();
+}
+
+absl::Status api_echo(brpc::Controller *cntl, Response *rsp) {
+  cntl->response_attachment().append(cntl->request_attachment());
+  // spdlog::info("[{}] echo. [message={}]", __func__, cntl->request_attachment().to_string());
+
+  // record request
+  kfpanda::RecordRequest n_req;
+  kfpanda::RecordResponse n_resp;
+  n_req.set_service("KungFuPandaServer");
+  n_req.set_type(::kfpanda::RECORD_TYPE_HTTP);
+  n_req.mutable_uri()->set_path("/api/echo");
+  n_req.set_data(cntl->request_attachment().to_string());
+  return RecordHandler::Handle(RecordContext{.cntl = cntl, .request = &n_req, .response = &n_resp});
+}
+
+absl::Status api_replay(brpc::Controller *cntl, Response *rrsp) {
+  kfpanda::ReplayResponse rsp;
+  kfpanda::ReplayRequest req;
+
+  absl::Status status = absl::OkStatus();
+  if (cntl->request_attachment().empty()) {
+    req.set_service("KungFuPandaServer");
+    req.mutable_target()->set_host("127.0.0.1");
+    req.mutable_target()->set_port(FLAGS_port);
+    req.mutable_option()->set_count(1);
+  } else {
+    status = google::protobuf::util::JsonStringToMessage(cntl->request_attachment().to_string(), &req);
+  }
+  if (status.ok()) {
+    status = ReplayHandler::Handle(ReplayContext{.cntl = cntl, .request = &req, .response = &rsp});
+  }
+  if (status.ok()) {
+    std::string js;
+    auto j = google::protobuf::util::MessageToJsonString(rsp, &js);
+    if (rrsp != nullptr) {
+      rrsp->AddJsonStr("data", js);
+    }
+    return absl::OkStatus();
+  } else {
+    return status;
+  }
+}
+
+absl::Status api_debug_stat(brpc::Controller *cntl, Response *rsp) {
+  auto dbstat = RocksDbManager::GetDbState();
+  if (rsp != nullptr) {
+    rsp->Add("data", dbstat);
+  }
+  return absl::OkStatus();
+}
+
+absl::Status api_debug_sample(brpc::Controller *cntl, Response *rsp) {
+  auto r = cntl->request_attachment().to_string();
+  rapidjson::Document doc;
+  doc.Parse(r.c_str(), r.size());
+  if (doc.HasParseError()) {
+    return absl::ErrnoToStatus(400, fmt::format("parse request body failed. [message={}]", r));
+  } else {
+    auto it_service = doc.FindMember("service");
+    auto it_count = doc.FindMember("count");
+    if (it_service == doc.MemberEnd()) {
+      return absl::ErrnoToStatus(400, "service is not specified");
+    } else {
+      auto count = it_count == doc.MemberEnd() ? 1 : it_count->value.GetInt();
+      auto items = RocksDbManager::TryGetIterms(it_service->value.GetString(), count);
+
+      cppcommon::JsonBuilder jb;
+      for (auto &[k, v] : items) {
+        kfpanda::RecordRequest rr;
+        if (rr.ParseFromString(v)) {
+          if (rr.type() == kfpanda::RECORD_TYPE_HTTP) {
+            std::string njs;
+            auto s = google::protobuf::util::MessageToJsonString(rr, &njs);
+            if (s.ok()) {
+              jb.AddJsonStr(k, njs);
+            }
+          } else {
+            spdlog::info("[{}] unsupported protocol type", __func__);
+          }
+        } else {
+          spdlog::info("[{}] parse record request failed", __func__);
+        }
+      }
+      if (rsp != nullptr) {
+        rsp->Add("data", jb);
+      }
+      return absl::OkStatus();
+    }
+  }
+}
+}  // namespace kfpanda
