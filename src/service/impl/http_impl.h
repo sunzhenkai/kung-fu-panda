@@ -43,6 +43,7 @@ inline void HttpKfPandaServiceImpl::Replay(::google::protobuf::RpcController* co
   if (!s.ok()) {
     RERROR("[{}] process faield. [message={}]", __func__, s.message());
   }
+  cntl->http_response().SetHeader("Content-Type", "application/json");
   cntl->response_attachment().append(rsp.ToJson(s));
 }
 
@@ -55,6 +56,7 @@ inline void HttpKfPandaServiceImpl::Api(::google::protobuf::RpcController* contr
 
   auto it = kRestfulApiViews.find(pt);
   auto status = absl::OkStatus();
+  cntl->http_response().SetHeader("Content-Type", "application/json");
   if (it != kRestfulApiViews.end()) {
     Response res;
     auto status = it->second(cntl, &res);

@@ -37,37 +37,66 @@ Response Example
 
 ```shell
 {
-    "successCount": 1,
-    "responses": [
-        {
-            "message": "hello world"
-        }
-    ]
+    "data": {
+        "successCount": 1,
+        "responses": [
+            {
+                "message": "hello world"
+            }
+        ]
+    },
+    "success": true,
+    "code": 0,
+    "message": ""
 }
 ```
 
-## `/debug/stat`
+## `/api/debug/stat`
 
 ```shell
-curl 127.0.0.1:9820/debug/stat
+curl 127.0.0.1:9820/api/debug/stat
 ```
 
 Response Example
 
 ```shell
-{"KungFuPandaServer":"4"}
+{
+    "data": {},
+    "success": true,
+    "code": 0,
+    "message": ""
+}
 ```
 
-## `/debug/sample`
+## `/api/debug/sample`
 
 ```shell
-curl 127.0.0.1:9820/debug/sample -d '{"service":"KungFuPandaServer"}'
+curl 127.0.0.1:9820/api/debug/sample -d '{"service":"KungFuPandaServer"}'
 ```
 
 Response Example
 
 ```shell
-{"1746787992959":{"uri":{"path":"/api/echo"},"service":"KungFuPandaServer","type":"RECORD_TYPE_HTTP","data":"aGVsbG8gd29ybGQ="}}
+{
+    "data": {
+        "1746881958817": {
+            "uri": {
+                "path": "/api/echo"
+            },
+            "service": "KungFuPandaServer",
+            "type": "RECORD_TYPE_HTTP",
+            "data": "aGVsbG8gd29ybGQ="
+        },
+        "1746724843689": {
+            "service": "KungFuPandaServer",
+            "type": "RECORD_TYPE_HTTP",
+            "data": "ogYMugYJL2FwaS9lY2hvsgkLaGVsbG8gd29ybGQ="
+        }
+    },
+    "success": true,
+    "code": 0,
+    "message": ""
+}
 ```
 
 # Docker
