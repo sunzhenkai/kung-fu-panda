@@ -8,6 +8,8 @@
 #include "absl/status/status.h"
 
 namespace kfpanda {
-extern const absl::Status kDbErr;
 extern const absl::Status kReqErr;
+extern const absl::Status kProtocolErr;
+
+extern const absl::Status kDbErr;
 }  // namespace kfpanda
