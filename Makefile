@@ -8,6 +8,9 @@ release:
 	@cmake --preset=release
 	@cmake --build release
 
+image:
+	@bash docker/build.sh
+
 test:
 	@./build/tests/test_main --gtest_filter=$(cases)
 
