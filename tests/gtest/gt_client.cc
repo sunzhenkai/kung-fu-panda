@@ -36,8 +36,9 @@ TEST(Client, GrpcEcho) {
   auto stub = client.Stub();
 
   brpc::Controller cntl;
-  kfpanda::HttpRequest request;
-  kfpanda::HttpResponse response;
+  kfpanda::EchoMessage request;
+  request.set_message("Client.GrpcEcho test message");
+  kfpanda::EchoMessage response;
 
   stub->Echo(&cntl, &request, &response, nullptr);
   ASSERT_TRUE(!cntl.Failed());

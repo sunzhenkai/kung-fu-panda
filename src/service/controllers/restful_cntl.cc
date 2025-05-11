@@ -4,6 +4,7 @@
 #include <butil/base64.h>
 #include <fmt/format.h>
 #include <protos/service/kfpanda/kfpanda.pb.h>
+#include <spdlog/spdlog.h>
 
 #include <string>
 #include <unordered_map>
@@ -13,10 +14,12 @@
 #include "handler/record_handler.h"
 #include "handler/replay_handler.h"
 #include "rapidjson/document.h"
+#include "service/impl/debug_impl.h"
 
 namespace kfpanda {
 const std::unordered_map<std::string, ViewFunc> kRestfulApiViews = {
     {"/api/echo", api_echo},
+    {"/api/grpc/echo", api_grpc_echo},
     {"/api/replay", api_replay},
     {"/api/debug/stat", api_debug_stat},
     {"/api/debug/sample", api_debug_sample},
@@ -47,6 +50,29 @@ absl::Status api_echo(brpc::Controller *cntl, Response *rsp) {
   n_req.set_type(::kfpanda::RECORD_TYPE_HTTP);
   n_req.mutable_uri()->set_path(cntl->http_request().uri().path());
   n_req.set_data(cntl->request_attachment().to_string());
+  return RecordHandler::Handle(RecordContext{.cntl = cntl, .request = &n_req, .response = &n_resp});
+}
+
+absl::Status api_grpc_echo(brpc::Controller *cntl, Response *rsp) {
+  auto method = kfpanda::KfPandaDebugService::descriptor()->FindMethodByName("Echo");
+  auto pt = fmt::format("/{}/{}", method->service()->full_name(), method->name());
+
+  kfpanda::RecordRequest n_req;
+  kfpanda::RecordResponse n_resp;
+  n_req.set_service("KungFuPandaServer");
+  n_req.set_type(::kfpanda::RECORD_TYPE_GRPC);
+  n_req.mutable_uri()->set_path(pt);
+  if (cntl->method()->name() == "Api") {
+    cntl->response_attachment().append(cntl->request_attachment());
+    kfpanda::EchoMessage req;
+    auto s = google::protobuf::util::JsonStringToMessage(cntl->request_attachment().to_string(), &req);
+    if (!s.ok()) {
+      return s;
+    }
+    req.SerializeToString(n_req.mutable_data());
+  } else {
+    n_req.set_data(cntl->request_attachment().to_string());
+  }
   return RecordHandler::Handle(RecordContext{.cntl = cntl, .request = &n_req, .response = &n_resp});
 }
 

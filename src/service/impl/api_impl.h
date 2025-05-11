@@ -31,7 +31,7 @@ inline void KfPandaApiServiceImpl::Api(::google::protobuf::RpcController* contro
   if (it != kRestfulApiViews.end()) {
     Response res;
     auto status = it->second(cntl, &res);
-    if (pt != "/api/echo") {
+    if (pt != "/api/echo" && pt != "/api/grpc/echo") {
       cntl->response_attachment().append(res.ToJson(status));
     }
   } else {
