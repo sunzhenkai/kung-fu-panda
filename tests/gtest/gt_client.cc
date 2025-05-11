@@ -6,7 +6,7 @@
 #include <string>
 
 #include "client/client.h"
-#include "client/http_client.h"
+#include "client/debug_client.h"
 #include "common/flags.h"
 #include "gtest/gtest.h"
 #include "replay/grpc_replay.h"
@@ -30,18 +30,19 @@ TEST(Client, SampleWrite) {
 
 TEST(Client, GrpcEcho) {
   auto server = fmt::format("127.0.0.1:{}", kfpanda::FLAGS_port);
-  auto client = kfpanda::HttpKfPandaClient(server);
+  auto client = kfpanda::KfPandaDebugClient(server);
   auto s = client.Init();
   ASSERT_TRUE(s.ok());
   auto stub = client.Stub();
 
   brpc::Controller cntl;
-  kfpanda::HttpRequest request;
-  kfpanda::HttpResponse response;
+  kfpanda::EchoMessage request;
+  request.set_message("Client.GrpcEcho test message");
+  kfpanda::EchoMessage response;
 
   stub->Echo(&cntl, &request, &response, nullptr);
   ASSERT_TRUE(!cntl.Failed());
-  spdlog::info("response: {}", cntl.response_attachment().to_string());
+  spdlog::info("response: {}", response.DebugString());
 }
 
 TEST(Client, GrpcReplay) {
@@ -52,7 +53,7 @@ TEST(Client, GrpcReplay) {
   kfpanda::RecordRequest req;
   kfpanda::HttpRequest echo_req;
   auto uri = req.mutable_uri();
-  uri->set_path("/HttpKfPandaService/Echo");
+  uri->set_path("/kfpanda.KfPandaDebugService/Echo");
   echo_req.SerializeToString(req.mutable_data());
   kfpanda::SvcResponse rsp;
   auto s = grpc_replay_client.Replay(&req, &rsp);

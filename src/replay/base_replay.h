@@ -59,6 +59,7 @@ inline void ReplayOperator::Replay(const ReplayInput &input, ReplayOutput &outpu
       RERROR("[{}] parse request failed. [service={}]", __func__, req.service());
       output.AddResult(kReqErr, rsp);
     } else {
+      rsp->set_type_str(kfpanda::RecordType_Name(req.type()));
       if (req.type() == kfpanda::RECORD_TYPE_HTTP) {
         auto s = http_replay_client.Replay(&req, rsp);
         output.AddResult(s, rsp);

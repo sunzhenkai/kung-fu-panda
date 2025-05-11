@@ -1,4 +1,3 @@
-
 /**
  * @file client.h
  * @brief
@@ -14,19 +13,19 @@
 #include "protos/service/kfpanda/kfpanda.pb.h"
 
 namespace kfpanda {
-class HttpKfPandaClient {
+class KfPandaDebugClient {
  public:
-  explicit HttpKfPandaClient(const std::string &server) : server_(server) {}
+  explicit KfPandaDebugClient(const std::string &server) : server_(server) {}
   absl::Status Init();
-  kfpanda::HttpKfPandaService_Stub *Stub() const;
+  kfpanda::KfPandaDebugService_Stub *Stub() const;
 
  private:
   std::string server_;
   brpc::Channel channel_;
-  std::shared_ptr<kfpanda::HttpKfPandaService_Stub> stub_;
+  std::shared_ptr<kfpanda::KfPandaDebugService_Stub> stub_;
 };
 
-inline absl::Status HttpKfPandaClient::Init() {
+inline absl::Status KfPandaDebugClient::Init() {
   // Initialize the channel, NULL means using default options.
   brpc::ChannelOptions options;
   options.protocol = "baidu_std";
@@ -36,9 +35,9 @@ inline absl::Status HttpKfPandaClient::Init() {
   if (channel_.Init(server_.c_str(), "", &options) != 0) {
     return absl::ErrnoToStatus(400, "absl::string_view message");
   }
-  stub_ = std::make_shared<kfpanda::HttpKfPandaService_Stub>(&channel_);
+  stub_ = std::make_shared<kfpanda::KfPandaDebugService_Stub>(&channel_);
   return absl::OkStatus();
 }
 
-inline kfpanda::HttpKfPandaService_Stub *HttpKfPandaClient::Stub() const { return stub_.get(); }
+inline kfpanda::KfPandaDebugService_Stub *KfPandaDebugClient::Stub() const { return stub_.get(); }
 }  // namespace kfpanda

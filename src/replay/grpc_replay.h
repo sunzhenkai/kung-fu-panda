@@ -46,6 +46,9 @@ inline absl::Status GrpcReplayClient::Replay(const kfpanda::RecordRequest *req, 
   // firstly using the path in replay request
   auto path = target_.path().empty() ? req->uri().path() : target_.path();
 
+  cntl.http_request().uri() = path;
+  // cntl.http_request().uri().SetH2Path(path);
+  // cntl.http_request().uri().set_path(path);
   cntl.http_request().set_content_type("application/grpc");
   cntl.http_request().SetHeader("te", "trailers");
 
@@ -54,11 +57,11 @@ inline absl::Status GrpcReplayClient::Replay(const kfpanda::RecordRequest *req, 
   cntl.request_attachment().append(req->data());
 
   channel_.CallMethod(nullptr, &cntl, nullptr, nullptr, nullptr);
+  // channel_.CallMethod(nullptr, &cntl, nullptr, nullptr, nullptr);
   if (cntl.Failed()) {
     auto msg = fmt::format("[GrpcReplayClient::Replay] replay failed. [path={}, erro={}]", path, cntl.ErrorText());
     return absl::ErrnoToStatus(cntl.ErrorCode(), msg);
   }
-  rsp->set_type_str(kfpanda::RecordType_Name(req->type()));
   butil::Base64Encode(cntl.response_attachment().to_string(), rsp->mutable_message());
   return absl::OkStatus();
 }
