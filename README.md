@@ -41,7 +41,8 @@ Response Example
         "successCount": 1,
         "responses": [
             {
-                "message": "hello world"
+                "message": "CgtoZWxsbyB3b3JsZA==",
+                "typeStr": "RECORD_TYPE_GRPC"
             }
         ]
     },
@@ -61,7 +62,9 @@ Response Example
 
 ```shell
 {
-    "data": {},
+    "data": {
+        "KungFuPandaServer": "16"
+    },
     "success": true,
     "code": 0,
     "message": ""
@@ -79,18 +82,13 @@ Response Example
 ```shell
 {
     "data": {
-        "1746881958817": {
+        "1746965279497": {
             "uri": {
-                "path": "/api/echo"
+                "path": "/kfpanda.KfPandaDebugService/Echo"
             },
             "service": "KungFuPandaServer",
-            "type": "RECORD_TYPE_HTTP",
-            "data": "aGVsbG8gd29ybGQ="
-        },
-        "1746724843689": {
-            "service": "KungFuPandaServer",
-            "type": "RECORD_TYPE_HTTP",
-            "data": "ogYMugYJL2FwaS9lY2hvsgkLaGVsbG8gd29ybGQ="
+            "type": "RECORD_TYPE_GRPC",
+            "data": "CgtoZWxsbyB3b3JsZA=="
         }
     },
     "success": true,
@@ -117,6 +115,7 @@ docker run --rm --name kfpanda -p 9820:9820 -it sunzhenkai/kfpanda:0.0.1
 
 - [Protocols](https://github.com/sunzhenkai/kung-fu-panda-protocols)
 - [Go SDK](https://github.com/sunzhenkai/kfpanda-go-sdk)
+- [C++ SDK](https://github.com/sunzhenkai/kfpanda-cpp-sdk)
 
 # References
 
