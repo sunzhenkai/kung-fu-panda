@@ -1,7 +1,9 @@
 #include "restful_cntl.h"
 
 #include <absl/status/status.h>
+#include <butil/base64.h>
 #include <fmt/format.h>
+#include <protos/service/kfpanda/kfpanda.pb.h>
 
 #include <string>
 #include <unordered_map>
@@ -37,14 +39,13 @@ std::string Response::From(const absl::Status &status) {
 
 absl::Status api_echo(brpc::Controller *cntl, Response *rsp) {
   cntl->response_attachment().append(cntl->request_attachment());
-  // spdlog::info("[{}] echo. [message={}]", __func__, cntl->request_attachment().to_string());
 
   // record request
   kfpanda::RecordRequest n_req;
   kfpanda::RecordResponse n_resp;
   n_req.set_service("KungFuPandaServer");
   n_req.set_type(::kfpanda::RECORD_TYPE_HTTP);
-  n_req.mutable_uri()->set_path("/api/echo");
+  n_req.mutable_uri()->set_path(cntl->http_request().uri().path());
   n_req.set_data(cntl->request_attachment().to_string());
   return RecordHandler::Handle(RecordContext{.cntl = cntl, .request = &n_req, .response = &n_resp});
 }
@@ -104,14 +105,10 @@ absl::Status api_debug_sample(brpc::Controller *cntl, Response *rsp) {
       for (auto &[k, v] : items) {
         kfpanda::RecordRequest rr;
         if (rr.ParseFromString(v)) {
-          if (rr.type() == kfpanda::RECORD_TYPE_HTTP) {
-            std::string njs;
-            auto s = google::protobuf::util::MessageToJsonString(rr, &njs);
-            if (s.ok()) {
-              jb.AddJsonStr(k, njs);
-            }
-          } else {
-            spdlog::info("[{}] unsupported protocol type", __func__);
+          std::string njs;
+          auto s = google::protobuf::util::MessageToJsonString(rr, &njs);
+          if (s.ok()) {
+            jb.AddJsonStr(k, njs);
           }
         } else {
           spdlog::info("[{}] parse record request failed", __func__);

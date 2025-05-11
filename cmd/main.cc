@@ -4,9 +4,9 @@
 #include "common/flags.h"
 #include "cppcommon/utils/error.h"
 #include "cppcommon/utils/to_str.h"
-#include "service/impl/http_impl.h"
+#include "service/impl/api_impl.h"
+#include "service/impl/debug_impl.h"
 #include "service/impl/impl.h"
-#include "utils/log.h"
 
 int main(int argc, char** argv) {
   // 1. init
@@ -21,11 +21,13 @@ int main(int argc, char** argv) {
   brpc::Server server;
   brpc::ServerOptions options;
   kfpanda::KfPandaServiceImpl service;
-  cppcommon::Assert(!server.AddService(&service, brpc::SERVER_DOESNT_OWN_SERVICE), "[main] add service failed.");
-  kfpanda::HttpKfPandaServiceImpl http_service;
-  auto mp = "/api/grpc/echo=>Echo,/api/*=>Api";
-  cppcommon::Assert(!server.AddService(&http_service, brpc::SERVER_DOESNT_OWN_SERVICE, mp),
-                    "[main] add service failed.");
+  kfpanda::KfPandaDebugServiceImpl debug_service;
+  kfpanda::KfPandaApiServiceImpl api_service;
+  auto msg = "[main] add service failed.";
+  cppcommon::Assert(!server.AddService(&service, brpc::SERVER_DOESNT_OWN_SERVICE), msg);
+  cppcommon::Assert(!server.AddService(&debug_service, brpc::SERVER_DOESNT_OWN_SERVICE), msg);
+  auto mp = "/api/*=>Api";
+  cppcommon::Assert(!server.AddService(&api_service, brpc::SERVER_DOESNT_OWN_SERVICE, mp), msg);
   cppcommon::Assert(!server.Start(kfpanda::FLAGS_port, &options), "[main] start server failed.");
 
   // 3. waiting

@@ -6,7 +6,7 @@
 #include <string>
 
 #include "client/client.h"
-#include "client/http_client.h"
+#include "client/debug_client.h"
 #include "common/flags.h"
 #include "gtest/gtest.h"
 #include "replay/grpc_replay.h"
@@ -30,7 +30,7 @@ TEST(Client, SampleWrite) {
 
 TEST(Client, GrpcEcho) {
   auto server = fmt::format("127.0.0.1:{}", kfpanda::FLAGS_port);
-  auto client = kfpanda::HttpKfPandaClient(server);
+  auto client = kfpanda::KfPandaDebugClient(server);
   auto s = client.Init();
   ASSERT_TRUE(s.ok());
   auto stub = client.Stub();
@@ -52,7 +52,7 @@ TEST(Client, GrpcReplay) {
   kfpanda::RecordRequest req;
   kfpanda::HttpRequest echo_req;
   auto uri = req.mutable_uri();
-  uri->set_path("/HttpKfPandaService/Echo");
+  uri->set_path("/kfpanda.HttpKfPandaService/Echo");
   echo_req.SerializeToString(req.mutable_data());
   kfpanda::SvcResponse rsp;
   auto s = grpc_replay_client.Replay(&req, &rsp);

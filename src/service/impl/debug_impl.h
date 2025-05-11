@@ -14,22 +14,21 @@
 #include "service/controllers/restful_cntl.h"
 
 namespace kfpanda {
-class HttpKfPandaServiceImpl : public kfpanda::HttpKfPandaService {
+class KfPandaDebugServiceImpl : public kfpanda::KfPandaDebugService {
   void Echo(::google::protobuf::RpcController* controller, const ::kfpanda::HttpRequest* request,
             ::kfpanda::HttpResponse* response, ::google::protobuf::Closure* done) override;
   void Replay(::google::protobuf::RpcController* controller, const ::kfpanda::HttpRequest* request,
               ::kfpanda::HttpResponse* response, ::google::protobuf::Closure* done) override;
-  void Api(::google::protobuf::RpcController* controller, const ::kfpanda::HttpRequest* request,
-           ::kfpanda::HttpResponse* response, ::google::protobuf::Closure* done) override;
 };
 
-inline void HttpKfPandaServiceImpl::Echo(::google::protobuf::RpcController* controller,
-                                         const ::kfpanda::HttpRequest* request, ::kfpanda::HttpResponse* response,
-                                         ::google::protobuf::Closure* done) {
+inline void KfPandaDebugServiceImpl::Echo(::google::protobuf::RpcController* controller,
+                                          const ::kfpanda::HttpRequest* request, ::kfpanda::HttpResponse* response,
+                                          ::google::protobuf::Closure* done) {
   brpc::ClosureGuard dg(done);
   brpc::Controller* cntl = static_cast<brpc::Controller*>(controller);
-  auto pt = fmt::format("/{}/{}", cntl->method()->service()->name(), cntl->method()->name());
-  spdlog::info("Grpc::Echo. [path={}]", pt);
+  auto pt = fmt::format("/{}/{}", cntl->method()->service()->full_name(), cntl->method()->name());
+  spdlog::info("Grpc::Echo. [service_full_name={}, path={}, uri_path={}]", cntl->method()->service()->full_name(), pt,
+               cntl->http_request().uri().path());
 
   // record request
   kfpanda::RecordRequest n_req;
@@ -42,9 +41,9 @@ inline void HttpKfPandaServiceImpl::Echo(::google::protobuf::RpcController* cont
   cntl->response_attachment().append(Response::From(status));
 }
 
-inline void HttpKfPandaServiceImpl::Replay(::google::protobuf::RpcController* controller,
-                                           const ::kfpanda::HttpRequest* request, ::kfpanda::HttpResponse* response,
-                                           ::google::protobuf::Closure* done) {
+inline void KfPandaDebugServiceImpl::Replay(::google::protobuf::RpcController* controller,
+                                            const ::kfpanda::HttpRequest* request, ::kfpanda::HttpResponse* response,
+                                            ::google::protobuf::Closure* done) {
   brpc::ClosureGuard dg(done);
   brpc::Controller* cntl = static_cast<brpc::Controller*>(controller);
   auto pt = fmt::format("/{}/{}", cntl->method()->service()->name(), cntl->method()->name());
@@ -57,26 +56,5 @@ inline void HttpKfPandaServiceImpl::Replay(::google::protobuf::RpcController* co
   }
   cntl->http_response().SetHeader("Content-Type", "application/json");
   cntl->response_attachment().append(rsp.ToJson(s));
-}
-
-inline void HttpKfPandaServiceImpl::Api(::google::protobuf::RpcController* controller,
-                                        const ::kfpanda::HttpRequest* request, ::kfpanda::HttpResponse* response,
-                                        ::google::protobuf::Closure* done) {
-  brpc::ClosureGuard dg(done);
-  brpc::Controller* cntl = static_cast<brpc::Controller*>(controller);
-  auto pt = cntl->http_request().uri().path();
-
-  auto it = kRestfulApiViews.find(pt);
-  auto status = absl::OkStatus();
-  cntl->http_response().SetHeader("Content-Type", "application/json");
-  if (it != kRestfulApiViews.end()) {
-    Response res;
-    auto status = it->second(cntl, &res);
-    if (pt != "/api/echo") {
-      cntl->response_attachment().append(res.ToJson(status));
-    }
-  } else {
-    cntl->response_attachment().append(Response::From(absl::ErrnoToStatus(410, "no such api")));
-  }
 }
 }  // namespace kfpanda
