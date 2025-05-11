@@ -14,11 +14,11 @@
 
 #include <cstdint>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "common/constants.h"
-#include "replay/http_replay.h"
+#include "grpc_replay.h"
+#include "http_replay.h"
 
 namespace kfpanda {
 struct ReplayRecord {
@@ -33,15 +33,10 @@ struct ReplayInput {
 
 struct ReplayOutput {
   kfpanda::ReplayResponse *response{nullptr};
-  inline void AddResult(const absl::Status &status, kfpanda::ReplayResponse::ServiceResponse *result = nullptr) {
+  inline void AddResult(const absl::Status &status, kfpanda::ReplayResponse::ServiceResponse *rsp = nullptr) {
     if (response == nullptr) return;
-    auto rsp = response->add_responses();
     if (status.ok()) {
       response->set_success_count(response->success_count() + 1);
-      if (result != nullptr) {
-        rsp->set_body(result->body());
-        rsp->set_message(result->message());
-      }
     } else {
       response->set_failed_count(response->failed_count() + 1);
       rsp->set_message(status.message());
@@ -56,18 +51,20 @@ class ReplayOperator : public cppcommon::Singleton<ReplayOperator> {
 
 inline void ReplayOperator::Replay(const ReplayInput &input, ReplayOutput &output) {
   auto http_replay_client = HttpReplayClient(input.request->target());
+  auto grpc_replay_client = GrpcReplayClient(input.request->target());
   for (auto &record : input.records) {
     kfpanda::RecordRequest req;
+    auto rsp = output.response->add_responses();
     if (!req.ParseFromString(record.value)) {
       RERROR("[{}] parse request failed. [service={}]", __func__, req.service());
-      output.AddResult(kReqErr);
+      output.AddResult(kReqErr, rsp);
     } else {
-      absl::Status status;
       if (req.type() == kfpanda::RECORD_TYPE_HTTP) {
-        kfpanda::ReplayResponse::ServiceResponse result;
-        auto s = http_replay_client.Replay(&req, &result);
-
-        output.AddResult(s, &result);
+        auto s = http_replay_client.Replay(&req, rsp);
+        output.AddResult(s, rsp);
+      } else if (req.type() == kfpanda::RECORD_TYPE_GRPC) {
+        auto s = grpc_replay_client.Replay(&req, rsp);
+        output.AddResult(s, rsp);
       } else {
         output.AddResult(kReqErr);
         RERROR("[{}] unknown protocol. [protocol={}]", __func__, kfpanda::RecordType_Name(req.type()));

@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
   kfpanda::KfPandaServiceImpl service;
   cppcommon::Assert(!server.AddService(&service, brpc::SERVER_DOESNT_OWN_SERVICE), "[main] add service failed.");
   kfpanda::HttpKfPandaServiceImpl http_service;
-  auto mp = "/api/echo => Echo,/api/replay => Replay, * => Api";
+  auto mp = "/api/* => Api";
   cppcommon::Assert(!server.AddService(&http_service, brpc::SERVER_DOESNT_OWN_SERVICE, mp),
                     "[main] add service failed.");
   cppcommon::Assert(!server.Start(kfpanda::FLAGS_port, &options), "[main] start server failed.");

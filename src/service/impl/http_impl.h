@@ -9,6 +9,7 @@
 #include <string>
 
 #include "brpc/closure_guard.h"
+#include "handler/record_handler.h"
 #include "protos/service/kfpanda/kfpanda.pb.h"
 #include "service/controllers/restful_cntl.h"
 
@@ -27,10 +28,17 @@ inline void HttpKfPandaServiceImpl::Echo(::google::protobuf::RpcController* cont
                                          ::google::protobuf::Closure* done) {
   brpc::ClosureGuard dg(done);
   brpc::Controller* cntl = static_cast<brpc::Controller*>(controller);
-  auto s = api_echo(cntl, nullptr);
-  if (!s.ok()) {
-    RERROR("[{}] process faield. [message={}]", __func__, s.message());
-  }
+  auto pt = fmt::format("/{}/{}", cntl->method()->name(), cntl->method()->service()->name());
+
+  // record request
+  kfpanda::RecordRequest n_req;
+  kfpanda::RecordResponse n_resp;
+  n_req.set_service("KungFuPandaServer");
+  n_req.set_type(::kfpanda::RECORD_TYPE_GRPC);
+  n_req.mutable_uri()->set_path(pt);
+  request->SerializeToString(n_req.mutable_data());
+  auto status = RecordHandler::Handle(RecordContext{.cntl = cntl, .request = &n_req, .response = &n_resp});
+  cntl->response_attachment().append(Response::From(status));
 }
 
 inline void HttpKfPandaServiceImpl::Replay(::google::protobuf::RpcController* controller,
@@ -60,7 +68,9 @@ inline void HttpKfPandaServiceImpl::Api(::google::protobuf::RpcController* contr
   if (it != kRestfulApiViews.end()) {
     Response res;
     auto status = it->second(cntl, &res);
-    cntl->response_attachment().append(res.ToJson(status));
+    if (pt != "/api/echo") {
+      cntl->response_attachment().append(res.ToJson(status));
+    }
   } else {
     cntl->response_attachment().append(Response::From(absl::ErrnoToStatus(410, "no such api")));
   }
