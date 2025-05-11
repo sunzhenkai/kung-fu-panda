@@ -28,7 +28,7 @@ inline void HttpKfPandaServiceImpl::Echo(::google::protobuf::RpcController* cont
                                          ::google::protobuf::Closure* done) {
   brpc::ClosureGuard dg(done);
   brpc::Controller* cntl = static_cast<brpc::Controller*>(controller);
-  auto pt = fmt::format("/{}/{}", cntl->method()->name(), cntl->method()->service()->name());
+  auto pt = fmt::format("/{}/{}", cntl->method()->service()->name(), cntl->method()->name());
   spdlog::info("Grpc::Echo. [path={}]", pt);
 
   // record request
@@ -47,7 +47,7 @@ inline void HttpKfPandaServiceImpl::Replay(::google::protobuf::RpcController* co
                                            ::google::protobuf::Closure* done) {
   brpc::ClosureGuard dg(done);
   brpc::Controller* cntl = static_cast<brpc::Controller*>(controller);
-  auto pt = fmt::format("/{}/{}", cntl->method()->name(), cntl->method()->service()->name());
+  auto pt = fmt::format("/{}/{}", cntl->method()->service()->name(), cntl->method()->name());
   spdlog::info("Grpc::Replay . [path={}]", pt);
 
   Response rsp;

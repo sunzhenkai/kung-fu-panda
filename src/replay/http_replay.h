@@ -42,6 +42,7 @@ inline absl::Status HttpReplayClient::Replay(const kfpanda::RecordRequest *req, 
   if (cntl.Failed()) {
     return absl::ErrnoToStatus(cntl.ErrorCode(), cntl.ErrorText());
   }
+  rsp->set_type_str(kfpanda::RecordType_Name(req->type()));
   rsp->set_message(cntl.response_attachment().to_string());
   return absl::OkStatus();
 }
