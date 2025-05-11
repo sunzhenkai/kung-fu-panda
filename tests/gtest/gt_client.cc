@@ -53,7 +53,7 @@ TEST(Client, GrpcReplay) {
   kfpanda::RecordRequest req;
   kfpanda::HttpRequest echo_req;
   auto uri = req.mutable_uri();
-  uri->set_path("/kfpanda.HttpKfPandaService/Echo");
+  uri->set_path("/kfpanda.KfPandaDebugService/Echo");
   echo_req.SerializeToString(req.mutable_data());
   kfpanda::SvcResponse rsp;
   auto s = grpc_replay_client.Replay(&req, &rsp);
