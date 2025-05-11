@@ -13,41 +13,18 @@
 #include <spdlog/spdlog.h>
 
 #include "absl/status/status.h"
-#include "brpc/channel.h"
-#include "cppcommon/extends/spdlog/log.h"
+#include "replay_client.h"
 
 namespace kfpanda {
-class HttpReplayClient {
+class HttpReplayClient : public kfpanda::ReplayClient {
  public:
-  explicit HttpReplayClient(const kfpanda::URI &target) : target_(target) { Init(); }
-  inline bool IsOk() { return !has_error_; }
-  absl::Status Replay(const kfpanda::RecordRequest *req, kfpanda::ReplayResponse::ServiceResponse *rsp);
-
- private:
-  void Init();
-
- private:
-  brpc::Channel channel_;
-  kfpanda::URI target_;
-  bool has_error_{false};
+  explicit HttpReplayClient(const kfpanda::URI &target) : ReplayClient(target) { Init("http"); }
+  absl::Status Replay(const kfpanda::RecordRequest *req, SvcResponse *rsp);
 };
 
-inline void HttpReplayClient::Init() {
-  brpc::ChannelOptions options;
-  options.protocol = "http";
-  options.timeout_ms = 1000;
-  options.max_retry = 0;
-  auto server = fmt::format("{}:{}", target_.host(), target_.port());
-  if (channel_.Init(server.c_str(), "", &options) != 0) {
-    RERROR("absl::string_view message");
-    has_error_ = true;
-  }
-}
-
-inline absl::Status HttpReplayClient::Replay(const kfpanda::RecordRequest *req,
-                                             kfpanda::ReplayResponse::ServiceResponse *rsp) {
+inline absl::Status HttpReplayClient::Replay(const kfpanda::RecordRequest *req, SvcResponse *rsp) {
   if (has_error_) {
-    auto msg = fmt::format("http replay client init failed. [host={}, port={}]", target_.host(), target_.port());
+    auto msg = fmt::format("replay client init failed. [host={}, port={}]", target_.host(), target_.port());
     return absl::ErrnoToStatus(501, msg);
   }
   auto rid = req->request_id();
@@ -65,6 +42,7 @@ inline absl::Status HttpReplayClient::Replay(const kfpanda::RecordRequest *req,
   if (cntl.Failed()) {
     return absl::ErrnoToStatus(cntl.ErrorCode(), cntl.ErrorText());
   }
+  rsp->set_type_str(kfpanda::RecordType_Name(req->type()));
   rsp->set_message(cntl.response_attachment().to_string());
   return absl::OkStatus();
 }
