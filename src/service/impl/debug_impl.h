@@ -27,6 +27,9 @@ inline void KfPandaDebugServiceImpl::Echo(::google::protobuf::RpcController* con
   brpc::ClosureGuard dg(done);
   brpc::Controller* cntl = static_cast<brpc::Controller*>(controller);
   response->set_message(request->message());
+  std::string bin;
+  request->SerializeToString(&bin);
+  cntl->request_attachment().append(bin);
   auto s = api_grpc_echo(cntl, nullptr);
   if (!s.ok()) {
     RERROR("[{}] failed. [message={}]", __func__, s.message());

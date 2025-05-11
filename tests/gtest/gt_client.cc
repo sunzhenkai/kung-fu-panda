@@ -42,7 +42,7 @@ TEST(Client, GrpcEcho) {
 
   stub->Echo(&cntl, &request, &response, nullptr);
   ASSERT_TRUE(!cntl.Failed());
-  spdlog::info("response: {}", cntl.response_attachment().to_string());
+  spdlog::info("response: {}", response.DebugString());
 }
 
 TEST(Client, GrpcReplay) {
