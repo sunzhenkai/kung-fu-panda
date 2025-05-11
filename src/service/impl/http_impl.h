@@ -29,6 +29,7 @@ inline void HttpKfPandaServiceImpl::Echo(::google::protobuf::RpcController* cont
   brpc::ClosureGuard dg(done);
   brpc::Controller* cntl = static_cast<brpc::Controller*>(controller);
   auto pt = fmt::format("/{}/{}", cntl->method()->name(), cntl->method()->service()->name());
+  spdlog::info("Grpc::Echo. [path={}]", pt);
 
   // record request
   kfpanda::RecordRequest n_req;
@@ -46,6 +47,9 @@ inline void HttpKfPandaServiceImpl::Replay(::google::protobuf::RpcController* co
                                            ::google::protobuf::Closure* done) {
   brpc::ClosureGuard dg(done);
   brpc::Controller* cntl = static_cast<brpc::Controller*>(controller);
+  auto pt = fmt::format("/{}/{}", cntl->method()->name(), cntl->method()->service()->name());
+  spdlog::info("Grpc::Replay . [path={}]", pt);
+
   Response rsp;
   auto s = api_replay(cntl, &rsp);
   if (!s.ok()) {
