@@ -6,4 +6,18 @@ make release
 
 IMAGE_NAME=sunzhenkai/kfpanda
 docker build -t ${IMAGE_NAME}:${VERSION} -f docker/Dockerfile .
-#docker push ${IMAGE_NAME}:${VERSION}
+
+echo "push ${IMAGE_NAME}:${VERSION} to docker hub? [y/N]"
+read choice
+
+case $choice in
+y)
+  docker push ${IMAGE_NAME}:${VERSION}
+  ;;
+n)
+  echo "skip publishing image"
+  ;;
+*)
+  echo "enter y/n"
+  ;;
+esac
