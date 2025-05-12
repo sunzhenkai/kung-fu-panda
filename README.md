@@ -37,20 +37,11 @@ message RecordRequest {
   bytes data = 102;
 }
 
-message ReplayResponse {
-  message ServiceResponse {
-    bytes body = 1;
-    string message = 2;
-    RecordType type = 3;
-    string type_str = 4;
-  }
-
+message RecordResponse {
+  // code: indicte the processing result
+  // 0: ok, failed otherwise
   int32 code = 1;
   string message = 2;
-
-  int32 success_count = 100;
-  int32 failed_count = 101;
-  repeated ServiceResponse responses = 102;
 }
 
 service KfPandaService {
