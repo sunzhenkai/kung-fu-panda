@@ -6,15 +6,29 @@ Kung Fu Panda is a general-purpose request recording and playback tool.
 
 ## KfPandaService
 
-### Record
-
-### Replay
+```protobuf
+service KfPandaService {
+  rpc Record(RecordRequest) returns (RecordResponse) {}
+  rpc Replay(ReplayRequest) returns (ReplayResponse) {}
+}
+```
 
 ## Debugervice
 
-### Echo
+```protobuf
+service KfPandaDebugService {
+  rpc Echo(EchoMessage) returns (EchoMessage) {}
+  rpc Replay(HttpRequest) returns (HttpResponse) {}
+}
+```
 
 ## ApiService
+
+```protobuf
+service KfPandaApiService {
+  rpc Api(HttpRequest) returns (HttpResponse) {}
+}
+```
 
 ```shell
 curl 127.0.0.1:9820/api/echo -d "hello world"
