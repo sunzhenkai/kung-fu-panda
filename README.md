@@ -13,7 +13,7 @@ service KfPandaService {
 }
 ```
 
-## Debugervice
+## KfPandaDebugService
 
 ```protobuf
 service KfPandaDebugService {
@@ -22,7 +22,7 @@ service KfPandaDebugService {
 }
 ```
 
-## ApiService
+## KfPandaApiService
 
 ```protobuf
 service KfPandaApiService {
