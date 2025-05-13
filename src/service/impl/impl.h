@@ -1,5 +1,6 @@
 #pragma once
 #include "brpc/closure_guard.h"
+#include "handler/log_handler.h"
 #include "handler/record_handler.h"
 #include "handler/replay_handler.h"
 #include "protos/service/kfpanda/kfpanda.pb.h"
@@ -12,6 +13,8 @@ class KfPandaServiceImpl : public kfpanda::KfPandaService {
               ::kfpanda::ReplayResponse* response, ::google::protobuf::Closure* done) override;
   void Sample(::google::protobuf::RpcController* controller, const ::kfpanda::SampleRequest* request,
               ::kfpanda::SampleResponse* response, ::google::protobuf::Closure* done) override;
+  void Log(::google::protobuf::RpcController* controller, const ::kfpanda::LogRequest* request,
+           ::kfpanda::LogResponse* response, ::google::protobuf::Closure* done) override;
 };
 
 inline void KfPandaServiceImpl::Record(::google::protobuf::RpcController* controller,
@@ -42,5 +45,13 @@ inline void KfPandaServiceImpl::Sample(::google::protobuf::RpcController* contro
   }
   response->set_success(true);
   response->set_code(0);
+}
+
+inline void KfPandaServiceImpl::Log(::google::protobuf::RpcController* controller, const ::kfpanda::LogRequest* request,
+                                    ::kfpanda::LogResponse* response, ::google::protobuf::Closure* done) {
+  brpc::ClosureGuard dg(done);
+  auto status = LogHandler::Handle(LogContext{.cntl = controller, .request = request, .response = response});
+  response->set_code(static_cast<int>(status.code()));
+  response->set_message(status.message());
 }
 }  // namespace kfpanda

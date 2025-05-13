@@ -10,6 +10,8 @@ Kung Fu Panda is a general-purpose request recording and playback tool.
 service KfPandaService {
   rpc Record(RecordRequest) returns (RecordResponse) {}
   rpc Replay(ReplayRequest) returns (ReplayResponse) {}
+  rpc Sample(SampleRequest) returns (SampleResponse) {}
+  rpc Log(LogRequest) returns (LogResponse) {}
 }
 ```
 
@@ -36,7 +38,9 @@ curl 127.0.0.1:9820/api/echo -d "hello world"
 
 # RPC Protocols
 
-## Request Recording
+## KfPandaService
+
+### Record
 
 ```protobuf
 message RecordRequest {
@@ -64,7 +68,7 @@ service KfPandaService {
 }
 ```
 
-## Request Playback
+### Playback
 
 ```protobuf
 message ReplayRequest {
@@ -102,9 +106,51 @@ service KfPandaService {
 
 ```
 
+### Log
+
+```protobuf
+message LogResponse {
+  int32 code = 1;
+  string message = 2;
+}
+
+enum LogLevel {
+  LOG_LEVEL_UNSPECIFIED = 0;
+  LOG_LEVEL_INFO = 1;
+  LOG_LEVEL_WARN = 2;
+  LOG_LEVEL_ERROR = 3;
+  LOG_LEVEL_FATAL = 4;
+  LOG_LEVEL_DEBUG = 5;
+}
+
+message LogRequest {
+  string request_id = 1;
+  int64 timestamp_ms = 2;
+  string service = 3;
+  string log_name = 4;
+  LogLevel log_level = 5;
+  string message = 6;
+
+  string file = 50;
+  int32 line = 51;
+  string function = 52;
+
+  string host = 100;
+  string environment = 101;
+  string region = 102;
+  string cluster = 103;
+  string version = 104;
+
+  map<string, string> metadata = 200;
+  string extra = 201;
+}
+```
+
 # API
 
-## `/api/replay`
+## Request Api
+
+### `/api/replay`
 
 Request Body
 
@@ -142,7 +188,7 @@ Response Example
 }
 ```
 
-## `/api/debug/stat`
+### `/api/debug/stat`
 
 ```shell
 curl 127.0.0.1:9820/api/debug/stat
@@ -161,7 +207,7 @@ Response Example
 }
 ```
 
-## `/api/debug/sample`
+### `/api/debug/sample`
 
 ```shell
 curl 127.0.0.1:9820/api/debug/sample -d '{"service":"KungFuPandaServer"}'
@@ -184,6 +230,103 @@ Response Example
     "success": true,
     "code": 0,
     "message": ""
+}
+```
+
+## Log Api
+
+### `/api/log/record`
+
+Request Body
+
+```json
+{
+  "request_id": "abcdef123456",
+  "timestamp_ms": 1684000000000,
+  "service": "user_service",
+  "log_name": "user_login",
+  "log_level": 1,
+  "message": "User 'john.doe' logged in successfully.",
+  "file": "auth.cc",
+  "line": 123,
+  "function": "HandleLogin",
+  "host": "user-api-01",
+  "environment": "production",
+  "region": "us-central1",
+  "cluster": "primary",
+  "version": "1.2.3",
+  "metadata": {
+    "user_id": "789",
+    "session_id": "xyz",
+    "latency_ms": "50"
+  },
+  "extra": "Detailed debug information here."
+}
+```
+
+Response
+
+```json
+{
+  "success": true,
+  "code": 0,
+  "message": ""
+}
+```
+
+### `/api/log/sample`
+
+Api With Query
+
+```shell
+/api/log/sample?service=user_service&log_name=user_login&count=3
+```
+
+Response
+
+```json
+{
+  "count": 1,
+  "data": {
+    "1684000000000": {
+      "requestId": "abcdef123456",
+      "timestampMs": "1684000000000",
+      "service": "user_service",
+      "logName": "user_login",
+      "logLevel": "LOG_LEVEL_INFO",
+      "message": "User 'john.doe' logged in successfully.",
+      "file": "auth.cc",
+      "line": 123,
+      "function": "HandleLogin",
+      "host": "user-api-01",
+      "environment": "production",
+      "region": "us-central1",
+      "cluster": "primary",
+      "version": "1.2.3",
+      "metadata": {
+        "user_id": "789",
+        "session_id": "xyz",
+        "latency_ms": "50"
+      },
+      "extra": "Detailed debug information here."
+    }
+  },
+  "success": true,
+  "code": 0,
+  "message": ""
+}
+```
+
+### `/api/log/stat`
+
+```json
+{
+  "data": {
+    "user_service::user_login": "1"
+  },
+  "success": true,
+  "code": 0,
+  "message": ""
 }
 ```
 
