@@ -341,7 +341,7 @@ make image
 ## Create Container & Run
 
 ```shell
-docker run --rm --name kfpanda -p 9820:9820 -it sunzhenkai/kfpanda:0.0.1
+docker run --rm --name kfpanda -p 9820:9820 -it sunzhenkai/kfpanda:0.0.4
 ```
 
 # Submodules
