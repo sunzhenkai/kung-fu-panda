@@ -9,12 +9,13 @@
 #include <string>
 #include <unordered_map>
 
+#include "absl/strings/numbers.h"
 #include "cppcommon/extends/rapidjson/builder.h"
 #include "google/protobuf/util/json_util.h"
+#include "handler/log_handler.h"
 #include "handler/record_handler.h"
 #include "handler/replay_handler.h"
 #include "rapidjson/document.h"
-#include "service/impl/debug_impl.h"
 
 namespace kfpanda {
 const std::unordered_map<std::string, ViewFunc> kRestfulApiViews = {
@@ -23,22 +24,10 @@ const std::unordered_map<std::string, ViewFunc> kRestfulApiViews = {
     {"/api/replay", api_replay},
     {"/api/debug/stat", api_debug_stat},
     {"/api/debug/sample", api_debug_sample},
+    {"/api/log/record", api_log_record},
+    {"/api/log/sample", api_log_sample},
+    {"/api/log/stat", api_log_stat},
 };
-
-std::string Response::ToJson() { return ToJson(status_); }
-
-std::string Response::ToJson(const absl::Status &status) {
-  auto code = static_cast<int>(status.code());
-  jb_.Add("success", code == 0);
-  jb_.Add("code", code);
-  jb_.Add("message", status.message());
-  return jb_.Build();
-}
-
-std::string Response::From(const absl::Status &status) {
-  Response res(status);
-  return res.ToJson();
-}
 
 absl::Status api_echo(brpc::Controller *cntl, Response *rsp) {
   cntl->response_attachment().append(cntl->request_attachment());
@@ -146,5 +135,42 @@ absl::Status api_debug_sample(brpc::Controller *cntl, Response *rsp) {
       return absl::OkStatus();
     }
   }
+}
+
+absl::Status api_log_sample(brpc::Controller *cntl, Response *rsp) {
+  auto service = cntl->http_request().uri().GetQuery("service");
+  auto log_name = cntl->http_request().uri().GetQuery("log_name");
+  auto count_str = cntl->http_request().uri().GetQuery("count");
+  int count = 1;
+  if (!count_str->empty()) {
+    auto s = absl::SimpleAtoi(*count_str, &count);
+    if (!s) {
+      return absl::ErrnoToStatus(400, "count field should be number");
+    }
+  }
+  auto items = LogsRocksDbManager::TryGetIterms(*service, *log_name, count);
+  cppcommon::JsonBuilder jb;
+  for (auto &item : items) {
+    jb.AddJsonStr(item.first, item.second);
+  }
+  rsp->Add("count", items.size());
+  rsp->Add("data", jb);
+  return absl::OkStatus();
+}
+
+absl::Status api_log_record(brpc::Controller *cntl, Response *rsp) {
+  kfpanda::LogRequest req;
+  auto s = google::protobuf::util::JsonStringToMessage(cntl->request_attachment().to_string(), &req);
+  if (!s.ok()) return s;
+  kfpanda::LogResponse trsp;
+  return LogHandler::Handle(LogContext{.cntl = cntl, .request = &req, .response = &trsp});
+}
+
+absl::Status api_log_stat(brpc::Controller *cntl, Response *rsp) {
+  auto dbstat = LogsRocksDbManager::GetDbState();
+  if (rsp != nullptr) {
+    rsp->Add("data", dbstat);
+  }
+  return absl::OkStatus();
 }
 }  // namespace kfpanda

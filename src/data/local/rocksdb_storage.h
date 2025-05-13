@@ -6,6 +6,7 @@
  */
 #pragma once
 #include <cppcommon/extends/spdlog/log.h>
+#include <fmt/format.h>
 
 #include <filesystem>
 #include <memory>
@@ -22,6 +23,7 @@
 #include "rocksdb/utilities/db_ttl.h"
 
 namespace kfpanda {
+using CStr = const std::string;
 using DBT = rocksdb::DBWithTTL;
 using DBItemT = std::pair<std::string, std::string>;
 using DBItemsT = std::vector<DBItemT>;
@@ -35,11 +37,11 @@ class RocksDbManager : public cppcommon::Singleton<RocksDbManager> {
 
   ~RocksDbManager();
 
- private:
+ protected:
   DBT *get_db(const std::string &service);
   DBT *try_get_db(const std::string &service);
 
- private:
+ protected:
   std::unordered_map<std::string, DBT *> store_;
   std::shared_mutex store_mtx_;
 };
@@ -115,5 +117,19 @@ inline DBStatT RocksDbManager::GetDbState() {
     it->second->GetProperty("rocksdb.estimate-num-keys", &v);
   }
   return ret;
+}
+
+class LogsRocksDbManager : public RocksDbManager {
+ public:
+  static DBT *GetDb(const std::string &service, const std::string &log_name);
+  static DBItemsT TryGetIterms(const std::string &service, const std::string &log_name, size_t count = 1);
+};
+
+inline DBT *LogsRocksDbManager::GetDb(const std::string &service, const std::string &log_name) {
+  return RocksDbManager::GetDb(fmt::format("{}::{}", service, log_name));
+}
+
+inline DBItemsT LogsRocksDbManager::TryGetIterms(CStr &service, CStr &log_name, size_t count) {
+  return RocksDbManager::TryGetIterms(fmt::format("{}::{}", service, log_name), count);
 }
 }  // namespace kfpanda
