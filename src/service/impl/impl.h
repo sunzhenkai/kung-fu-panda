@@ -41,7 +41,7 @@ inline void KfPandaServiceImpl::Sample(::google::protobuf::RpcController* contro
   brpc::ClosureGuard dg(done);
   auto items = RocksDbManager::TryGetIterms(request->service(), request->count());
   for (auto& item : items) {
-    response->add_data(item.second.data());
+    response->add_data(item.second);
   }
   response->set_success(true);
   response->set_code(0);
