@@ -43,7 +43,11 @@ inline absl::Status HttpReplayClient::Replay(const kfpanda::RecordRequest *req, 
     return absl::ErrnoToStatus(cntl.ErrorCode(), cntl.ErrorText());
   }
   rsp->set_type_str(kfpanda::RecordType_Name(req->type()));
-  rsp->set_message(cntl.response_attachment().to_string());
+  if (cntl.response_attachment().empty()) {
+    rsp->set_message("empty response. [code={}]", cntl.request_code());
+  } else {
+    rsp->set_message(cntl.response_attachment().to_string());
+  }
   return absl::OkStatus();
 }
 }  // namespace kfpanda
