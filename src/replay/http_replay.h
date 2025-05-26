@@ -44,7 +44,7 @@ inline absl::Status HttpReplayClient::Replay(const kfpanda::RecordRequest *req, 
   }
   rsp->set_type_str(kfpanda::RecordType_Name(req->type()));
   if (cntl.response_attachment().empty()) {
-    rsp->set_message("empty response. [code={}]", cntl.request_code());
+    rsp->set_message(fmt::format("empty response. [code={}]", cntl.request_code()));
   } else {
     rsp->set_message(cntl.response_attachment().to_string());
   }
