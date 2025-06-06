@@ -8,10 +8,15 @@
     {
       "kind": "git",
       "repository": "https://github.com/sunzhenkai/vcpkg-base.git",
-      "baseline": "c6e3c18db4d41c9fa9032113cab120fcdd849529",
+      "baseline": "ec326d764b023ac8f4517fdc9b62e0e05e0c8cd3",
       "reference": "main",
-      "packages": ["apollo-client", "aerospike-client", "babylon", "cpp-common"]
+      "packages": [
+        "apollo-client",
+        "aerospike-client",
+        "babylon",
+        "cpp-common",
+        "kung-fu-panda-protocols"
+      ]
     }
-  ],
-  "overlay-ports": ["assets/overlay-ports"]
+  ]
 }
