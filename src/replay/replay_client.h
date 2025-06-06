@@ -14,7 +14,7 @@
 #include "protos/service/kfpanda/kfpanda.pb.h"
 
 namespace kfpanda {
-using SvcResponse = kfpanda::ReplayResponse::ServiceResponse;
+using SvcResponse = kfpanda::ServiceResponse;
 
 class ReplayClient {
  public:
