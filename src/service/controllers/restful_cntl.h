@@ -20,6 +20,7 @@ extern const std::unordered_map<std::string, ViewFunc> kRestfulApiViews;
 absl::Status api_echo(brpc::Controller *cntl, Response *rsp);
 absl::Status api_grpc_echo(brpc::Controller *cntl, Response *rsp);
 absl::Status api_replay(brpc::Controller *cntl, Response *rsp);
+absl::Status api_replay_v2(brpc::Controller *cntl, Response *rsp);
 absl::Status api_debug_stat(brpc::Controller *cntl, Response *rsp);
 absl::Status api_debug_sample(brpc::Controller *cntl, Response *rsp);
 absl::Status api_log_record(brpc::Controller *cntl, Response *rsp);

@@ -37,9 +37,19 @@ struct ReplayOutput {
   kfpanda::ReplayResponse *response{nullptr};
 };
 
+struct ReplayInputV2 {
+  const kfpanda::ReplayRequestV2 *request;
+  std::vector<ReplayRecord> records;
+};
+
+struct ReplayOutputV2 {
+  kfpanda::ReplayResponseV2 *response{nullptr};
+};
+
 class ReplayOperator : public cppcommon::Singleton<ReplayOperator> {
  public:
   static void Replay(const ReplayInput &input, ReplayOutput &output);
+  static void ReplayV2(const ReplayInputV2 &input, ReplayOutputV2 &output);
 };
 
 struct ReplayClientBundle {
@@ -53,35 +63,57 @@ inline std::shared_ptr<ReplayClientBundle> NewReplayClientBundle(const URI &targ
   return std::shared_ptr<ReplayClientBundle>(clients);
 }
 
+inline absl::Status ReplayOnce(std::shared_ptr<ReplayClientBundle> &client, ServiceResponse *rsp,
+                               const kfpanda::RecordRequest &req) {
+  absl::Status s = absl::OkStatus();
+  if (client == nullptr) return s;
+  rsp->set_type_str(kfpanda::RecordType_Name(req.type()));
+  if (req.type() == kfpanda::RECORD_TYPE_HTTP) {
+    s = client->http.Replay(&req, rsp);
+  } else if (req.type() == kfpanda::RECORD_TYPE_GRPC) {
+    s = client->grpc.Replay(&req, rsp);
+  } else {
+    RERROR("[{}] unknown protocol. [protocol={}]", __func__, kfpanda::RecordType_Name(req.type()));
+    s = kReqErr;
+  }
+  if (!s.ok()) {
+    rsp->set_message(s.ToString());
+  }
+  return s;
+}
+
 inline void ReplayOperator::Replay(const ReplayInput &input, ReplayOutput &output) {
   auto base_clients = NewReplayClientBundle(input.request->target());
-  auto compare_clients = NewReplayClientBundle(input.request->target_compare());
-  auto replay = [](std::shared_ptr<ReplayClientBundle> &client, ReplayResponse::ServiceResponse *rsp,
-                   const kfpanda::RecordRequest &req) -> absl::Status {
-    absl::Status s = absl::OkStatus();
-    if (client == nullptr) return s;
-    rsp->set_type_str(kfpanda::RecordType_Name(req.type()));
-    if (req.type() == kfpanda::RECORD_TYPE_HTTP) {
-      s = client->http.Replay(&req, rsp);
-    } else if (req.type() == kfpanda::RECORD_TYPE_GRPC) {
-      s = client->grpc.Replay(&req, rsp);
-    } else {
-      RERROR("[{}] unknown protocol. [protocol={}]", __func__, kfpanda::RecordType_Name(req.type()));
-      s = kReqErr;
-    }
-    if (!s.ok()) {
-      rsp->set_message(s.ToString());
-    }
-    return s;
-  };
   for (auto &record : input.records) {
-    auto resp = output.response->add_results();
+    auto resp = output.response->add_responses();
     kfpanda::RecordRequest req;
     if (!req.ParseFromString(record.value)) {
       RERROR("[{}] parse request failed. [service={}]", __func__, req.service());
     } else {
-      auto s1 = replay(base_clients, resp->mutable_base(), req);
-      auto s2 = replay(compare_clients, resp->mutable_compare(), req);
+      auto s = ReplayOnce(base_clients, resp, req);
+      if (s.ok()) {
+        output.response->set_success_count(output.response->success_count() + 1);
+      } else {
+        output.response->set_failed_count(output.response->failed_count() + 1);
+      }
+    }
+  }
+}
+
+inline void ReplayOperator::ReplayV2(const ReplayInputV2 &input, ReplayOutputV2 &output) {
+  auto base_clients = NewReplayClientBundle(input.request->target_base());
+  auto compare_clients = NewReplayClientBundle(input.request->target_compare());
+  for (auto &record : input.records) {
+    auto resp = output.response->add_responses();
+    kfpanda::RecordRequest req;
+    if (!req.ParseFromString(record.value)) {
+      RERROR("[{}] parse request failed. [service={}]", __func__, req.service());
+    } else {
+      auto s1 = ReplayOnce(base_clients, resp->mutable_base(), req);
+      auto s2 = absl::OkStatus();
+      if (compare_clients) {
+        s2 = ReplayOnce(compare_clients, resp->mutable_compare(), req);
+      }
       if (s1.ok() && s2.ok()) {
         output.response->set_success_count(output.response->success_count() + 1);
       } else {

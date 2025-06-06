@@ -22,6 +22,7 @@ const std::unordered_map<std::string, ViewFunc> kRestfulApiViews = {
     {"/api/echo", api_echo},
     {"/api/grpc/echo", api_grpc_echo},
     {"/api/replay", api_replay},
+    {"/api/replayv2", api_replay_v2},
     {"/api/debug/stat", api_debug_stat},
     {"/api/debug/sample", api_debug_sample},
     {"/api/log/record", api_log_record},
@@ -80,6 +81,36 @@ absl::Status api_replay(brpc::Controller *cntl, Response *rrsp) {
   }
   if (status.ok()) {
     status = ReplayHandler::Handle(ReplayContext{.cntl = cntl, .request = &req, .response = &rsp});
+  }
+  if (status.ok()) {
+    std::string js;
+    auto j = google::protobuf::util::MessageToJsonString(rsp, &js);
+    if (rrsp != nullptr) {
+      rrsp->AddJsonStr("data", js);
+    }
+    return absl::OkStatus();
+  } else {
+    return status;
+  }
+}
+
+absl::Status api_replay_v2(brpc::Controller *cntl, Response *rrsp) {
+  kfpanda::ReplayResponseV2 rsp;
+  kfpanda::ReplayRequestV2 req;
+
+  absl::Status status = absl::OkStatus();
+  if (cntl->request_attachment().empty()) {
+    req.set_service("KungFuPandaServer");
+    req.mutable_target_base()->set_host("127.0.0.1");
+    req.mutable_target_base()->set_port(FLAGS_port);
+    req.mutable_target_compare()->set_host("127.0.0.1");
+    req.mutable_target_compare()->set_port(FLAGS_port);
+    req.mutable_option()->set_count(1);
+  } else {
+    status = google::protobuf::util::JsonStringToMessage(cntl->request_attachment().to_string(), &req);
+  }
+  if (status.ok()) {
+    status = ReplayHandlerV2::Handle(ReplayV2Context{.cntl = cntl, .request = &req, .response = &rsp});
   }
   if (status.ok()) {
     std::string js;
