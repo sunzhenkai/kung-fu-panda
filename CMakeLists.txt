@@ -4,7 +4,6 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 option(BUILD_TESTING "build unittests" OFF)
-option(BUILD_TOOLS "build tools" OFF)
 add_definitions(-Wall)
 
 include(GNUInstallDirs) # CMAKE_INSTALL_INCLUDEDIR / CMAKE_INSTALL_LIBDIR / ...
@@ -44,9 +43,4 @@ target_link_libraries(kfpanda ${PROJECT_NAME})
 
 if(BUILD_TESTING)
   add_subdirectory(tests)
-endif()
-
-if(BUILD_TOOLS)
-  add_executable(kfpanda_replay tools/replay/kfpanda_replay.cc)
-  target_link_libraries(kfpanda_replay ${PROJECT_NAME})
 endif()
