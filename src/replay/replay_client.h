@@ -35,7 +35,7 @@ inline void ReplayClient::Init(const std::string &protocol) {
   options.protocol = protocol;
   options.timeout_ms = 5000;
   options.max_retry = 0;
-  auto server = fmt::format("{}:{}", target_.host(), target_.port());
+  auto server = target_.port() > 0 ? fmt::format("{}:{}", target_.host(), target_.port()) : target_.host();
   if (channel_.Init(server.c_str(), "", &options) != 0) {
     RERROR(fmt::format("absl::string_view message. [server={}, protocol={}]", server, protocol));
     has_error_ = true;
