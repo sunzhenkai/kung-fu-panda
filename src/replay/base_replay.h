@@ -67,6 +67,7 @@ inline absl::Status ReplayOnce(std::shared_ptr<ReplayClientBundle> &client, Serv
                                const kfpanda::RecordRequest &req) {
   absl::Status s = absl::OkStatus();
   if (client == nullptr) return s;
+  rsp->set_type(req.type());
   rsp->set_type_str(kfpanda::RecordType_Name(req.type()));
   if (req.type() == kfpanda::RECORD_TYPE_HTTP) {
     s = client->http.Replay(&req, rsp);
