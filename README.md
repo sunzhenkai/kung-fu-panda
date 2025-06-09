@@ -349,6 +349,7 @@ docker run --rm --name kfpanda -p 9820:9820 -it sunzhenkai/kfpanda:0.0.4
 - [Protocols](https://github.com/sunzhenkai/kung-fu-panda-protocols)
 - [Go SDK](https://github.com/sunzhenkai/kfpanda-go-sdk)
 - [C++ SDK](https://github.com/sunzhenkai/kfpanda-cpp-sdk)
+- [Tools](https://github.com/sunzhenkai/kfpanda-tools)
 - [Web UI](https://github.com/Sunflowerjing/kfpanda-admin)
 
 # References

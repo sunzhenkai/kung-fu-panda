@@ -59,7 +59,7 @@ inline absl::Status GrpcReplayClient::Replay(const kfpanda::RecordRequest *req, 
     auto msg = fmt::format("[GrpcReplayClient::Replay] replay failed. [path={}, erro={}]", path, cntl.ErrorText());
     return absl::ErrnoToStatus(cntl.ErrorCode(), msg);
   }
-  butil::Base64Encode(cntl.response_attachment().to_string(), rsp->mutable_message());
+  butil::Base64Encode(cntl.response_attachment().to_string(), rsp->mutable_body());
   return absl::OkStatus();
 }
 }  // namespace kfpanda

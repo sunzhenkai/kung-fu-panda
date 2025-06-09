@@ -4,6 +4,7 @@
 #include <butil/base64.h>
 #include <fmt/format.h>
 #include <protos/service/kfpanda/kfpanda.pb.h>
+#include <rapidjson/error/en.h>
 #include <spdlog/spdlog.h>
 
 #include <string>
@@ -137,7 +138,8 @@ absl::Status api_debug_sample(brpc::Controller *cntl, Response *rsp) {
   rapidjson::Document doc;
   doc.Parse(r.c_str(), r.size());
   if (doc.HasParseError()) {
-    return absl::ErrnoToStatus(400, fmt::format("parse request body failed. [message={}]", r));
+    return absl::ErrnoToStatus(400, fmt::format("parse request body failed. [message={}, error={}]", r,
+                                                rapidjson::GetParseError_En(doc.GetParseError())));
   } else {
     auto it_service = doc.FindMember("service");
     auto it_count = doc.FindMember("count");
